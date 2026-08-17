@@ -36,8 +36,14 @@ docs/
 | What | Command |
 |------|---------|
 | Run anything in the build environment | `docker exec -w /Workspace/mforth nasm-docker-amd64 sh -c '<command>'` |
+| Build | `make` |
+| Build, then run the tests | `make test` |
+| Build, then run mforth | `make run` |
+| Delete the build output | `make clean` |
 | Assemble | `nasm -f elf64 <file>.asm -o <file>.o` |
 | Link | `clang -no-pie <file>.o -o <name>` |
+
+The Makefile invokes nothing but nasm and clang, so every `make` command needs the container prefix above. See `docs/adr/0002-keep-the-container-out-of-the-makefile.md`.
 
 The container is not auto-started (restart policy `no`). If `docker exec` fails because Colima or `nasm-docker-amd64` is not running, ask the developer before starting either. Do not run `colima start` or `docker start` unprompted.
 

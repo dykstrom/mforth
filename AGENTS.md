@@ -11,8 +11,8 @@ mforth is a 64-bit indirect-threaded-code (ITC) Forth for Linux/x86_64, written 
 | Language | x86_64 assembly, NASM syntax |
 | Target | Linux/x86_64 |
 | Threading model | Indirect threaded code (ITC) |
-| C runtime | libc, linked statically |
-| Assembler / linker | `nasm -f elf64`; linked with `clang -static`. No `gcc` in the container |
+| C runtime | libc, linked dynamically |
+| Assembler / linker | `nasm -f elf64`; linked with `clang -no-pie`. No `gcc` in the container |
 | Build | Make |
 | Build environment | Docker container `nasm-docker-amd64`, repo mounted at `/Workspace/mforth`. The host is macOS/arm64 and cannot build |
 
@@ -37,10 +37,11 @@ docs/
 |------|---------|
 | Run anything in the build environment | `docker exec -w /Workspace/mforth nasm-docker-amd64 sh -c '<command>'` |
 | Assemble | `nasm -f elf64 <file>.asm -o <file>.o` |
-| Link | `clang -static <file>.o -o <name>` |
+| Link | `clang -no-pie <file>.o -o <name>` |
 
 The container is not auto-started (restart policy `no`). If `docker exec` fails because Colima or `nasm-docker-amd64` is not running, ask the developer before starting either. Do not run `colima start` or `docker start` unprompted.
 
 ## Gotchas
 
-- `clang -static` is load-bearing for readability, not just packaging. With static linking, `call puts` assembles and links as written. Under dynamic linking the same line fails with `relocation R_X86_64_PC32 ... can not be used when making a PIE object`, and every libc call has to be written `call puts wrt ..plt`.
+- `-no-pie` is load-bearing for readability, not just packaging. In a non-PIE executable the linker synthesizes a PLT stub for `puts`, so `call puts` assembles and links as written, and a string's address is just `mov rdi, msg`. Under clang's default PIE both break: the call fails with `relocation R_X86_64_PC32 ... can not be used when making a PIE object` and must be written `call puts wrt ..plt`, and the address must become `lea rdi, [rel msg]`. Never "fix" a PIE relocation error by adding `wrt ..plt` — add `-no-pie` to the link instead.
+- It is PIE that breaks the simple syntax, not dynamic linking. `clang -static` also works, because it implies non-PIE; it was the original choice here, dropped in favour of `-no-pie` because the flag names the actual constraint. See `docs/adr/0001-link-non-pie.md`.

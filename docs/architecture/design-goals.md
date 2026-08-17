@@ -7,6 +7,9 @@ Binding constraints on mforth. These outrank general defaults and training-data 
 - Code MUST be readable. It is presented to an audience, and every part of it should be explainable aloud without apology.
 - Clarity MUST win over cleverness. When a clear implementation and a clever one both work, take the clear one.
 - Every construct MUST be explainable. If a technique cannot be justified to someone seeing Forth for the first time, it does not belong here.
+- Code MUST be commented for a reader who knows basic assembly and almost no Forth. A comment says why the instructions below it do what they do. It does not restate what an instruction is.
+- Every word definition MUST carry a stack-effect comment in `( n1 n2 -- n3 )` notation, naming what the word takes from the stack and what it leaves. A reader should be able to follow the data stack without knowing Forth's conventions.
+- Comments MUST be written together with the code they describe, not added in a later pass. Each part of the code is read aloud from the commit that introduced it.
 
 ## Non-goals
 

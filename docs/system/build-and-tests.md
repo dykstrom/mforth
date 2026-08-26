@@ -17,3 +17,8 @@ input; otherwise mforth reads `/dev/null`. The runner prints one line per test, 
 
 Expectation files end in `.expected`, not `.out`. `.gitignore` ignores `*.out` as a build
 artifact, so a test named `<name>.out` would be left out of the repository without warning.
+
+`.` prints a space after the number, so a line in `tests/*.expected` that ends in a printed
+number ends with a space. `tests/run.sh` compares with `diff -u`, which counts that space. An
+editor that strips trailing whitespace on save turns a passing test into a failing one, and
+the diff it prints looks identical on both sides.

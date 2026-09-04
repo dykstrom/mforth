@@ -2,6 +2,11 @@
 ; the Forth machine, the size of its two stacks, and NEXT, the inner
 ; interpreter every word ends with.
 
+; Every address in mforth is absolute. The binary is linked with -no-pie, so
+; a label is a number the linker knows, and [latest] is the cell living at
+; that number. nasm 3 asks to be told so instead of assuming it.
+        DEFAULT ABS
+
 ; The Forth machine keeps four values in registers.
 ;
 ; rbx, r12 and r13 are callee-saved in the System V ABI: a function that uses

@@ -1,5 +1,6 @@
-; The words mforth knows by name. LIT and the three stack words are nothing
-; but assembly; the rest go through libc or through the dictionary.
+; The words mforth knows by name. LIT, the three stack words and the two
+; arithmetic words are nothing but assembly; the rest go through libc or
+; through the dictionary.
 ;
 ; Every word here is defined with the defcode macro from
 ; include/dictionary.inc, which lays down the header, the code field, and the
@@ -67,6 +68,23 @@
         mov     [DSP], rdx
         NEXT
 
+; + ( n1 n2 -- n3 ) leaves the sum of the top two items.
+        defcode "+", plus
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        add     [DSP], rax              ; and add it to the one underneath
+        NEXT
+
+; - ( n1 n2 -- n3 ) leaves n1 minus n2.
+;
+; The order is the order they were typed: 5 3 - leaves 2, because the item
+; underneath is the one being subtracted from.
+        defcode "-", minus
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        sub     [DSP], rax              ; take it from the one underneath
+        NEXT
+
 ; . ( n -- ) prints the top of the data stack, followed by one space.
 ;
 ; Forth's . leaves the space so that several numbers printed in a row can be
@@ -99,28 +117,55 @@
 ; when no word has that name.
 ;
 ; c-addr u is how Forth writes a string on the stack: the address of the first
-; character, then how many characters there are. FIND walks the dictionary
-; from the newest word backwards, comparing that name with each word's own.
+; character, then how many characters there are.
+;
+; The walk itself is find_name below. The outer interpreter looks a name up for
+; every word a person types, and calls that subroutine directly rather than
+; going through the Forth machine to reach it.
 ;
 ; The standard's FIND leaves a flag beside the execution token, saying whether
 ; the word is immediate. mforth leaves the token by itself, because the flags
 ; of a word are always the cell in front of its code field.
-;
-; Both arguments stay on the data stack for as long as the walk lasts, so
-; there is nothing to save around the call to memcmp. The header being looked
-; at lives in r14: the ABI makes memcmp give that register back untouched, and
-; nothing else in mforth uses it.
         defcode "FIND", find
+        mov     rdi, [DSP + 8]          ; where the name starts
+        mov     rsi, [DSP]              ; how many characters it has
+        call    find_name
+        add     DSP, 8                  ; drop the length
+        mov     [DSP], rax              ; the answer goes where c-addr was
+        NEXT
+
+; find_name walks the dictionary from the newest word backwards, comparing the
+; name it was given with each word's own. It takes the address of the name in
+; rdi and its length in rsi, and leaves the execution token in rax, or 0 when
+; no word carries that name.
+;
+; This is an ordinary assembly subroutine called the way libc's are, not a
+; Forth word. FIND above and the outer interpreter both use it. It takes its
+; arguments where the C library would, so the registers below are the first two
+; of the System V ABI and its return register.
+;
+;   in    rdi   where the name to look up starts
+;         rsi   how many characters that name has
+;   out   rax   the execution token, or 0 when no word has that name
+;
+; memcmp gives r14, r15 and rbp back untouched, which is why the walk keeps its
+; three values in them: the header being looked at, the name being looked for,
+; and how long that name is. Nothing else in mforth holds a value in any of the
+; three, so only rbp, which the ABI counts as the caller's, is saved.
+find_name:
+        push    rbp
+        mov     r15, rdi                ; the name has to outlive memcmp
+        mov     rbp, rsi                ; and so does its length
         mov     r14, [latest]           ; the newest word in the dictionary
 .this_word:
         test    r14, r14                ; 0 is the link of the first word
         jz      .no_such_word
         movzx   rax, byte [r14 + 8]     ; how long this word's name is
-        cmp     rax, [DSP]              ; how long the wanted name is
+        cmp     rax, rbp                ; how long the wanted name is
         jne     .word_before            ; two lengths that differ cannot match
-        mov     rdi, [DSP + 8]          ; the name we are looking for
+        mov     rdi, r15                ; the name we are looking for
         lea     rsi, [r14 + 9]          ; this word's name, after its length
-        mov     rdx, [DSP]              ; compare that many characters
+        mov     rdx, rbp                ; compare that many characters
         call    memcmp                  ; 0 when the two are the same
         test    eax, eax
         jz      .found
@@ -135,17 +180,15 @@
         movzx   rax, byte [r14 + 8]     ; the name length once more
         lea     rax, [r14 + rax + 9]    ; one past the last character
         add     rax, 7
-        and     rax, -8                 ; round up: that is where padding ends
-        add     rax, 8                  ; the cell after it holds the flags
-        jmp     .answer
+        and     rax, -8                 ; round up: the flags cell starts here
+        add     rax, 8                  ; step over it to the code field
+        pop     rbp
+        ret
 
 .no_such_word:
         xor     eax, eax                ; the walk ran off the end of the chain
-
-.answer:
-        add     DSP, 8                  ; drop the length
-        mov     [DSP], rax              ; and leave the answer where c-addr was
-        NEXT
+        pop     rbp
+        ret
 
 ; EXECUTE ( xt -- ) runs the word whose execution token is on the data stack.
 ;

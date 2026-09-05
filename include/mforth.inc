@@ -1,5 +1,5 @@
 ; Conventions the rest of mforth is written against: the registers that make up
-; the Forth machine, the size of its two stacks, and NEXT, the inner
+; the Forth machine, the sizes of the memory it is given, and NEXT, the inner
 ; interpreter every word ends with.
 
 ; Every address in mforth is absolute. The binary is linked with -no-pie, so
@@ -32,6 +32,10 @@
 ; for an item that is not there.
 DATA_STACK_SIZE   equ 65536
 RETURN_STACK_SIZE equ 65536
+
+; One line of input at a time. A longer line has the characters past the end
+; dropped, and nothing reports that either.
+INPUT_BUFFER_SIZE equ 256
 
 ; NEXT is the inner interpreter: the three instructions that run at the end of
 ; every word to start the next one.

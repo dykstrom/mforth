@@ -62,9 +62,16 @@ token of the word with that name, or 0. It starts at `latest` and follows the li
 each word it compares the length first and calls libc `memcmp` only when the lengths match.
 The comparison is case-sensitive: `DUP` finds DUP and `dup` finds nothing.
 
-FIND holds the header it is looking at in r14, which the ABI makes libc give back untouched,
-and no other code in mforth uses. Both arguments stay on the data stack while the walk runs,
-so the call to `memcmp` needs nothing saved around it.
+The walk is `find_name` in `src/words.asm`, an assembly subroutine taking the address in rdi
+and the length in rsi and leaving the answer in rax. The FIND word is a wrapper that moves the
+two arguments off the data stack and the answer back onto it. The outer interpreter calls
+`find_name` for every word a person types, so it does not go through the Forth machine to
+reach the dictionary.
+
+`find_name` keeps three values in registers that libc gives back untouched: r14 holds the
+header it is looking at, r15 the name it is looking for, and rbp that name's length. Only rbp
+is saved and restored, because the ABI counts it as the caller's; nothing else in mforth holds
+a value in r14 or r15.
 
 The Forth 2012 standard defines `FIND ( c-addr -- c-addr 0 | xt 1 | xt -1 )`: it takes a
 counted string and leaves a flag saying whether the word is immediate. mforth takes an address

@@ -37,10 +37,17 @@ Forth return stack pointer RSP is r13, and W is rax. The first three are callee-
 word calls libc without saving them — see `docs/adr/0003-forth-machine-in-callee-saved-registers.md`.
 W holds a value only from NEXT's jump until `docol` reads it; rax is scratch everywhere else.
 `main` aligns the machine stack once with `sub rsp, 8`, and no word touches rsp afterwards, so
-a word that does use the machine stack must restore it before reaching NEXT.
+a word that does use the machine stack must restore it before reaching NEXT. The subroutines
+`find_name` and `refill` each push rbp on entry and pop it before they return, which both
+saves the caller's rbp and keeps the alignment for the libc call they make.
 
 Both stacks are 65536-byte `.bss` regions in `src/inner.asm`. They grow downward and their
 pointer holds the address of the top item. Neither is checked for overflow or underflow.
+
+`main` reads the first line, then points IP at `interpreter` in `src/outer.asm` and runs
+`NEXT`. That is a thread of one cell holding the execution token of INTERPRET, and it is the
+program mforth runs — see `docs/system/outer-interpreter.md`. Before ticket 004 `main` pointed
+IP at a thread written out by hand in `src/mforth.asm`; that thread is gone.
 
 `nasm -Wall` reports `reloc-abs-qword` and `reloc-rel-dword` on every cell holding a code
 address, such as `dq docol` in `.data`. Those relocations are what a thread is made of in a

@@ -5,8 +5,8 @@
 #
 # A test is a file tests/<name>.expected holding the output mforth must
 # produce. When tests/<name>.f exists, it is fed to mforth on standard
-# input; otherwise mforth reads nothing. There are no .f files yet: the
-# interpreter cannot read input until ticket 004.
+# input; otherwise mforth reads nothing, which it takes as end of input
+# and leaves at once.
 
 set -u
 

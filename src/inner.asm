@@ -21,6 +21,13 @@ return_stack_top:
 ; jumped through, so the body of the word begins one cell further on. IP still
 ; points into the thread that got here, and that address has to survive until
 ; the word ends: the return stack is where it waits.
+;
+; docol is reached by a jump rather than a call, but it has a register contract
+; like a subroutine's, and W is the whole of what NEXT hands it.
+;
+;   in    W     the execution token NEXT jumped through
+;         IP    where in the calling thread to carry on
+;   out   IP    the first cell of this word's body
 
         section .text
 docol:

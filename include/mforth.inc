@@ -37,6 +37,11 @@ RETURN_STACK_SIZE equ 65536
 ; dropped, and nothing reports that either.
 INPUT_BUFFER_SIZE equ 256
 
+; Room for the words a person defines while mforth runs. The headers and the
+; bodies share it, and nothing checks it either: a session that defines enough
+; words to fill it writes past the end.
+DICTIONARY_SIZE   equ 65536
+
 ; NEXT is the inner interpreter: the three instructions that run at the end of
 ; every word to start the next one.
 ;

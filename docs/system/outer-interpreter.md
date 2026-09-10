@@ -71,6 +71,31 @@ apart.
 
 The data stack is left alone when a word is unknown. A standard Forth empties it.
 
+## Interpreting and compiling
+
+INTERPRET has two halves, and the `state` cell in `src/compiler.asm` picks between them for
+every word it handles. `docs/system/compiler.md` covers the compiler itself.
+
+| What the text is | `state` is 0 | `state` is -1 |
+|------------------|--------------|---------------|
+| A word that is not immediate | Jump through its code field | Append its token with `comma_cell` |
+| A word marked `F_IMMEDIATE` | Jump through its code field | Jump through its code field |
+| A number | Push it | Append `xt_lit`, then the value |
+| Neither | Print `<name> ?`, store 0 in `state`, read the next line | The same |
+
+The immediate test is `test qword [rax - 8], F_IMMEDIATE`: the flags of a word are always the
+cell before its code field, which is what
+`docs/adr/0004-flags-after-the-name-in-a-header.md` decided.
+
+An unknown word stores 0 in `state`, so the next line is run and not appended to a definition
+that will never be finished. That definition is left where it is: still hidden, still the
+newest word, its dictionary space spent. Nothing rolls it back, which is the answer the two
+stacks and the input buffer already give.
+
+A definition may span several lines. `state` is a cell and not something a line owns, so it
+survives `refill`, and INTERPRET answers ` ok` at the end of every line whether it is
+compiling or not.
+
 ## The words
 
 | Word | Stack effect | Notes |
@@ -78,7 +103,7 @@ The data stack is left alone when a word is unknown. A standard Forth empties it
 | `KEY` | `( -- c )` | The next character of the line, or the line feed once the line is spent. It never reads a new line. |
 | `WORD` | `( -- c-addr u )` | Wraps `parse_word`. u is 0 when the line is spent. |
 | `NUMBER` | `( c-addr u -- n f )` | Wraps `to_number`. The standard spells this `>NUMBER` and converts as far as it can; mforth answers about the whole text. |
-| `INTERPRET` | `( -- )` | Handles one word, then loops. |
+| `INTERPRET` | `( -- )` | Handles one word, then loops. Runs it or compiles it, per the table above. |
 
 These four are `defcode` definitions like every other word, and they are here rather than in
 `src/words.asm` because they are the interpreter's own vocabulary. The rest of the words are
@@ -90,15 +115,20 @@ because a KEY that read a new line would swallow the line the person is about to
 ## Testing
 
 `tests/interpreter.f` is fed to mforth on standard input by `tests/run.sh`, and the output is
-diffed against `tests/interpreter.expected`. It covers `+`, `-`, a stack word, an unknown word
-followed by a word that must not run, and PRINT42, which is a word written in Forth reached by
-name. `tests/core-words.f` covers the rest of the vocabulary.
+diffed against `tests/interpreter.expected`. It covers `+`, `-`, a stack word, and an unknown
+word followed by a word that must not run. `tests/core-words.f` covers the rest of the
+vocabulary, and
+`tests/colon-definitions.f` covers the compiler and the two halves above.
 
 Trailing spaces in the expected file are significant. `.` prints a space after the number and
 ` ok` begins with one, so a line reading `3  ok` holds two spaces.
 
 ## What is not here yet
 
-Nothing compiles. STATE, `:` and `;` arrive with ticket 006, and INTERPRET gains the branch
-that appends a token to a definition instead of running it. There is no BASE, no way to load a
-file other than piping it on standard input, and no check on either stack.
+There are no control structures. IF, ELSE, THEN and the loops need a branch word and a
+compile-time stack, and arrive with ticket 007. Until then the loop INTERPRET runs cannot be
+written in Forth, which is what
+`docs/adr/0005-interpreter-loop-in-one-cell-of-thread.md` records.
+
+There is no BASE, no way to load a file other than piping it on standard input, and no check
+on either stack.

@@ -21,7 +21,7 @@ mforth is a 64-bit indirect-threaded-code (ITC) Forth for Linux/x86_64, written 
 | Path | What's there |
 |------|-------------|
 | `src/` | Assembly sources. nasm is invoked on `src/mforth.asm` alone; the rest arrive through `%include`. |
-| `include/` | `.inc` files of macros and constants. `include/mforth.inc` holds the register names, the sizes of the two stacks and the input buffer, and the NEXT macro; `include/dictionary.inc` holds the header layout and the two macros that define a word. A constant that sets the size of one of those regions goes in `include/mforth.inc`, not beside the storage it sizes. |
+| `include/` | `.inc` files of macros and constants. `include/mforth.inc` holds the register names, the sizes of the two stacks, the input buffer and the dictionary, and the NEXT macro; `include/dictionary.inc` holds the header layout and the two macros that define a word. A constant that sets the size of one of those regions goes in `include/mforth.inc`, not beside the storage it sizes. |
 | `tests/` | `tests/run.sh` and one `.expected` file per test. |
 | `docs/` | Durable project context. Sub-folder layout below shows where each kind of doc goes. |
 

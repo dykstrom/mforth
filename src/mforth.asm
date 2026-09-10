@@ -1,9 +1,11 @@
 ; mforth - a 64-bit indirect threaded code Forth for Linux/x86_64.
 ;
-; This iteration reads. An inner interpreter runs threaded code, a dictionary
-; holds every word under its name, and an outer interpreter turns what a person
-; types into words to run and numbers to push. The program mforth runs is no
-; longer written in this file: it is whatever arrives on standard input.
+; This iteration defines. An inner interpreter runs threaded code, a dictionary
+; holds every word under its name, an outer interpreter turns what a person
+; types into words to run and numbers to push, and a compiler adds new words to
+; the dictionary while the program runs. The program mforth runs is not written
+; in this file: it is whatever arrives on standard input, including the words
+; that arrive there as definitions.
 ;
 ; mforth uses the C library, so the entry point is main and not _start:
 ; libc's own startup code runs first and calls main, which means puts and
@@ -19,6 +21,7 @@
 %include "include/dictionary.inc"       ; what a word looks like in memory
 %include "src/inner.asm"                ; the two stacks, docol and EXIT
 %include "src/words.asm"                ; LIT, DUP, ., FIND, EXECUTE and more
+%include "src/compiler.asm"             ; HERE, CREATE, ":" and ";"
 %include "src/outer.asm"                ; the loop that reads and runs a line
 
         section .text
@@ -39,6 +42,13 @@ main:
         mov     DSP, data_stack_top
         mov     RSP, return_stack_top
 
+        ; Where a walk through the dictionary starts. PREVIOUS_HEADER is a nasm
+        ; %define that every header redefines to itself, so on this line it is
+        ; the last header the assembler laid down, and a walk from here reaches
+        ; every word. It has to be read after all of them, which is what puts
+        ; it in this file: the %includes above are the whole dictionary.
+        mov     qword [latest], PREVIOUS_HEADER
+
         ; Read the first line, then point IP at the one-cell thread that runs
         ; the interpreter. main never returns: BYE leaves through libc exit
         ; when the input runs out.
@@ -48,49 +58,7 @@ main:
         mov     IP, interpreter
         NEXT
 
-; PRINT42 ( -- ) prints 42 and ends the line.
-;
-; This is what a definition written in Forth looks like in memory. Its header
-; is the same one a word written in assembly has. What differs is the code
-; field: it holds docol, and the execution tokens of the words to run follow
-; it.
-;
-;                        section .data              section .text
-;
-;   header_print42 -> +------------------+
-;                     | link             |   the word defined before PRINT42
-;                     | 7 P R I N T 4 2  |   the name: a length, then characters
-;                     | flags = 0        |
-;   xt_print42 ->     | docol            | -------> docol: sub RSP, 8
-;                     +------------------+                 mov [RSP], IP
-;                     | xt_lit           | -.              lea IP, [W + 8]
-;                     |    42            |  |              NEXT
-;                     | xt_dot           |  |- the body
-;                     | xt_cr            |  |
-;                     | xt_exit          | -'
-;                     +------------------+
-;
-; The interpreter reaches PRINT42 by looking its name up, exactly the way it
-; reaches DUP: nothing that runs a word has to know which of the two kinds it
-; is. Ticket 006 makes the interpreter build a definition like this one while
-; it runs; here it is assembled by hand.
-        defword "PRINT42", print42
-        dq      xt_lit, 42
-        dq      xt_dot
-        dq      xt_cr
-        dq      xt_exit
-
-        section .data
-
-; Where a walk through the dictionary starts: the word defined last, which is
-; PRINT42 just above. FIND follows the links back from here, so this cell has
-; to be written after every word, and PRINT42 is defined in this file rather
-; than in src/words.asm. Ticket 006 turns it into a variable that the compiler
-; updates as it defines words.
-latest:
-        dq      PREVIOUS_HEADER
-
         section .rodata
 
 ; puts expects a NUL-terminated string and adds the newline itself.
-banner: db      "mforth 0.5.0", 0
+banner: db      "mforth 0.6.0", 0

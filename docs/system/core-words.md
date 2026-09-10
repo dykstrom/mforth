@@ -85,15 +85,17 @@ alone. `C@` widens with `movzx`, so a byte read back is never negative.
 
 Nothing checks that an address is one mforth may touch, and nothing checks alignment.
 
-There is no word yet that hands out an address to use. `HERE`, `ALLOT`, `CREATE` and
-`VARIABLE` arrive with ticket 006. Until then the only addresses a program can reach are the
-ones `WORD` leaves, which point into the input buffer.
+`HERE` and `ALLOT` in `src/compiler.asm` hand out an address to use, so a program can reserve
+space and read and write it with these four words. `docs/system/compiler.md` covers them. The
+other addresses a program can reach are the ones `WORD` leaves, which point into the input
+buffer.
 
 ## Words left out on purpose
 
 `NEGATE`, `ABS`, `MOD`, `/`, `NIP`, `TUCK`, `?DUP`, `0=`, `0<`, `1+`, `1-` and `2*` can all be
 built from the words above, so they are not here. Ticket 008 defines them in Forth, and that
-they can be is the point that ticket makes.
+they can be is the point that ticket makes. `VARIABLE` and `CONSTANT` are not here either;
+`docs/system/compiler.md` lists what the compiler does define.
 
 ## Testing
 

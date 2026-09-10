@@ -79,8 +79,10 @@ The data stack is left alone when a word is unknown. A standard Forth empties it
 | `WORD` | `( -- c-addr u )` | Wraps `parse_word`. u is 0 when the line is spent. |
 | `NUMBER` | `( c-addr u -- n f )` | Wraps `to_number`. The standard spells this `>NUMBER` and converts as far as it can; mforth answers about the whole text. |
 | `INTERPRET` | `( -- )` | Handles one word, then loops. |
-| `+` | `( n1 n2 -- n3 )` | Added here because ticket 004's example needs it and no other ticket defines it. |
-| `-` | `( n1 n2 -- n3 )` | The same. |
+
+These four are `defcode` definitions like every other word, and they are here rather than in
+`src/words.asm` because they are the interpreter's own vocabulary. The rest of the words are
+in `docs/system/core-words.md`.
 
 INTERPRET does not use KEY. KEY reads from the same buffer, and it does not call `refill`,
 because a KEY that read a new line would swallow the line the person is about to type.
@@ -90,7 +92,7 @@ because a KEY that read a new line would swallow the line the person is about to
 `tests/interpreter.f` is fed to mforth on standard input by `tests/run.sh`, and the output is
 diffed against `tests/interpreter.expected`. It covers `+`, `-`, a stack word, an unknown word
 followed by a word that must not run, and PRINT42, which is a word written in Forth reached by
-name.
+name. `tests/core-words.f` covers the rest of the vocabulary.
 
 Trailing spaces in the expected file are significant. `.` prints a space after the number and
 ` ok` begins with one, so a line reading `3  ok` holds two spaces.

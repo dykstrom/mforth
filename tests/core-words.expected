@@ -1,0 +1,14 @@
+mforth 0.5.0
+6  ok
+3 1  ok
+-3 -1  ok
+-1 0  ok
+-1 -1  ok
+8 14 6  ok
+-1 0  ok
+1 2 1  ok
+1 3 2  ok
+0 2 0  ok
+5 5  ok
+42  ok
+65  ok

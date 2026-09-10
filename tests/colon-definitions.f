@@ -1,0 +1,18 @@
+: SQUARE DUP * ;
+7 SQUARE .
+: CUBE DUP SQUARE * ;
+3 CUBE .
+: FOURTH
+SQUARE SQUARE ;
+2 FOURTH .
+: LUCKY 7 ;
+LUCKY .
+: FOO 1 ;
+: FOO FOO 1 + ;
+FOO .
+STATE @ .
+HERE 8 ALLOT DUP 42 SWAP ! @ .
+HERE 11 , @ .
+HERE 65 C, C@ .
+: BAD DUP QQQ * ;
+1 2 + .

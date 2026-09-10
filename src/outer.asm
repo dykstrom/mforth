@@ -284,16 +284,41 @@ to_number:
         call    to_number
         test    rdx, rdx
         jz      .unknown_word
+        cmp     qword [state], 0
+        jne     .compile_a_literal
         sub     DSP, 8                  ; push what the text spelled
         mov     [DSP], rax
         NEXT
 
-; A word of that name exists: jump through its code field, which is what NEXT
-; does with a token it reads from a thread. This one came off the input
-; instead, and that is the only difference between here and EXECUTE.
+; A word of that name exists. Run it when the interpreter is running what it
+; reads, and run it anyway when it is immediate. Otherwise append its token to
+; the definition being built, which is the whole of what compiling a word is.
 .run_the_word:
+        cmp     qword [state], 0
+        je      .execute_it
+        test    qword [rax - 8], F_IMMEDIATE  ; the flags of the word found
+        jnz     .execute_it
+        mov     rdi, rax
+        call    comma_cell              ; append the token to the body
+        NEXT
+
+; Jump through the word's code field, which is what NEXT does with a token it
+; reads from a thread. This one came off the input instead, and that is the
+; only difference between here and EXECUTE.
+.execute_it:
         mov     W, rax
         jmp     [W]
+
+; Compiling, and the text spells a number. A number in a body takes two cells:
+; LIT, which pushes the cell after itself, and then the number. The diagram
+; above ":" in src/compiler.asm shows the pair sitting in a finished word.
+.compile_a_literal:
+        mov     r8, rax                 ; the value has to outlive the call
+        mov     rdi, xt_lit
+        call    comma_cell
+        mov     rdi, r8
+        call    comma_cell
+        NEXT
 
 ; The line is spent. Answer it the way a Forth answers, and read the next.
 .line_is_done:
@@ -303,7 +328,14 @@ to_number:
 
 ; Neither a word nor a number. Name it back and read the next line, which
 ; drops whatever else was typed on this one.
+;
+; Compiling stops here too, so the next line is run and not appended to a
+; definition that will never be finished. That definition is left where it is:
+; still hidden, still the newest word, and its space in the dictionary spent.
+; Nothing rolls it back, which is the answer the two stacks and the input
+; buffer already give.
 .unknown_word:
+        mov     qword [state], 0
         mov     rdi, unknown_format
         mov     esi, [word_length]      ; %.*s wants the length as an int
         mov     rdx, [word_address]

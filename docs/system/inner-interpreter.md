@@ -43,9 +43,14 @@ saves the caller's rbp and keeps the alignment for the libc call they make.
 
 Every subroutine called with `call` carries a register table in its comment: an `in` row for
 each argument register and an `out` row for each result register. `find_name` in
-`src/words.asm` has one, and so do `refill`, `parse_word` and `to_number` in `src/outer.asm`.
-`docol` carries one as well, although a jump reaches it rather than a `call`, because NEXT
-hands it the execution token in W.
+`src/words.asm` has one; so do `refill`, `parse_word` and `to_number` in `src/outer.asm`, and
+`header_flags`, `comma_cell` and `create_header` in `src/compiler.asm`. `docol` carries one as
+well, although a jump reaches it rather than a `call`, because NEXT hands it the execution
+token in W.
+
+`header_flags` and `comma_cell` state which registers they touch as well, because callers rely
+on it: `find_name` calls `header_flags` while holding live values in r14, r15 and rbp, and
+INTERPRET keeps a value in r8 across a call to `comma_cell`.
 
 Both stacks are 65536-byte `.bss` regions in `src/inner.asm`. They grow downward and their
 pointer holds the address of the top item. Neither is checked for overflow or underflow.

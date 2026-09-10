@@ -19,9 +19,9 @@
 ;
 ; The order the words appear in is the order they are chained in. LIT comes
 ; first, so its link is 0 and a walk reaches it last. EXECUTE is the last word
-; defined here, but not the last word defined: PRINT42 in src/mforth.asm comes
-; after it, which is why `latest`, the cell a walk starts from, is written
-; there rather than here.
+; defined here, but not the last word defined: src/compiler.asm and
+; src/outer.asm come after it, which is why `latest`, the cell a walk starts
+; from, is set up in main and not here.
 
         extern  printf                  ; printf(const char *format, ...)
         extern  putchar                 ; putchar(int c)
@@ -37,7 +37,12 @@
 ;
 ; A Forth normally keeps LIT out of reach, because typing it where there is no
 ; thread to read from makes no sense. mforth gives it a name like every other
-; word; the flag that hides a word arrives with ticket 006.
+; word, and F_HIDDEN, the flag that would take the name away, is used only by
+; ":" for a definition still being built.
+;
+; This is the word INTERPRET compiles when a number appears inside a
+; definition: the token of LIT, and then the number itself in the cell after
+; it.
         defcode "LIT", lit
         mov     rax, [IP]               ; the number sitting in the thread
         add     IP, 8                   ; step over it
@@ -373,6 +378,9 @@
 ; rdi and its length in rsi, and leaves the execution token in rax, or 0 when
 ; no word carries that name.
 ;
+; A word whose flags carry F_HIDDEN is passed over as though its name did not
+; match, so a definition under construction cannot be found by its own name.
+;
 ; This is an ordinary assembly subroutine called the way libc's are, not a
 ; Forth word. FIND above and the outer interpreter both use it. It takes its
 ; arguments where the C library would, so the registers below are the first two
@@ -410,12 +418,15 @@ find_name:
 ; The code field follows the header, and the execution token is its address.
 ; Walking there means stepping over the length byte and the name, over the
 ; padding that rounds the name up to a cell, and over the flags.
+; The name matches. A word marked hidden is passed over even so, and the walk
+; carries on to the word defined before it: that is what makes the name inside
+; ": FOO FOO 1 + ;" mean the FOO that already existed.
 .found:
-        movzx   rax, byte [r14 + 8]     ; the name length once more
-        lea     rax, [r14 + rax + 9]    ; one past the last character
-        add     rax, 7
-        and     rax, -8                 ; round up: the flags cell starts here
-        add     rax, 8                  ; step over it to the code field
+        mov     rdi, r14                ; the header the walk stopped at
+        call    header_flags
+        test    qword [rax], F_HIDDEN
+        jnz     .word_before
+        add     rax, 8                  ; step over the flags to the code field
         pop     rbp
         ret
 

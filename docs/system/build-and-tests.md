@@ -22,3 +22,8 @@ artifact, so a test named `<name>.out` would be left out of the repository witho
 number ends with a space. `tests/run.sh` compares with `diff -u`, which counts that space. An
 editor that strips trailing whitespace on save turns a passing test into a failing one, and
 the diff it prints looks identical on both sides.
+
+The first line of every `tests/*.expected` file is the banner mforth prints at startup, so the
+version string lives in `src/mforth.asm` and again in each expected file. Raising the version
+means editing all of them, and each new test adds another place to edit. A missed one fails
+with a diff on the banner line and nothing else.

@@ -14,17 +14,21 @@ field, which is what it was before headers existed.
 | 8 | 1 | Name length in bytes. |
 | 9 | the name length | The characters of the name. |
 | after the name | 0 to 7 | Zero padding, up to the next multiple of 8. |
-| | 8 | Flags. Every word holds 0 here. |
+| | 8 | Flags. Every word holds 0 except `;`, which holds `F_IMMEDIATE`. |
 | | 8 | Code field. The execution token points at this cell. |
 
 The flags sit after the name and not before it. A name is as long as it is, so no field after
 the name starts at a fixed distance from the header. The flags are always the cell before the
 code field, so a word's flags can be read as `[xt - 8]` from its execution token alone.
-`F_IMMEDIATE` and `F_HIDDEN` are declared in `include/dictionary.inc`; ticket 006 is the first
-code that sets or reads them.
+`F_IMMEDIATE` and `F_HIDDEN` are declared in `include/dictionary.inc`. `INTERPRET` reads
+`F_IMMEDIATE` at `[xt - 8]` to decide whether to run a word while compiling. `find_name` reads
+`F_HIDDEN` and passes over a word that carries it, which is how `:` keeps a name meaning the
+older word until `;` finishes the new one.
 
 The macro pads with `align 8, db 0`. A plain `align 8` fills the gap with 0x90 bytes instead,
-which then sit between the name and the flags in any dump of a header.
+which then sit between the name and the flags in any dump of a header. `create_header`, which
+writes this layout at runtime, does not write the padding at all: its region is `.bss` and so
+starts as zeros, and nothing reads those bytes.
 
 ## Defining a word
 
@@ -34,7 +38,11 @@ differ in what the code field holds.
 | Macro | Defines | Code field | Where the macro leaves the assembler |
 |-------|---------|-----------|--------------------------------------|
 | `defcode "DUP", dup` | A word written in assembly | `code_dup`, the label the macro writes | `.text`, so the machine code follows the call |
-| `defword "PRINT42", print42` | A word written in Forth | `docol` | `.data`, so the execution tokens follow the call |
+| `defword "NAME", name` | A word written in Forth | `docol` | `.data`, so the execution tokens follow the call |
+
+Nothing calls `defword`. Since ticket 006 every word written in Forth is built by `:` while
+mforth runs, so the macro stands as the assemble-time statement of what such a word is, beside
+the `defcode` that defines the other kind.
 
 A call carries all three cases at once: `defcode "DUP", dup`. The macro is lowercase because
 it is assemble-time machinery, like `db` or `align`; `"DUP"` is uppercase because it is the
@@ -46,14 +54,16 @@ Each macro redefines `PREVIOUS_HEADER`, a nasm `%define`, to the header it just 
 next header links back to it. This is why the order words appear in the source is the order
 they are chained in.
 
-`latest` is a cell in `src/mforth.asm` holding the address of the last header defined, which is
-PRINT42's. It is written in that file and not in `src/words.asm` because PRINT42 is defined
-after every word in `src/words.asm`, and a walk that starts anywhere earlier cannot reach it.
+`latest` holds the address of the newest header, and every walk starts there. The cell is
+declared in `src/compiler.asm` beside `here` and `state`, because `create_header` writes it
+each time a word is defined. `main` stores the starting value into it, because `PREVIOUS_HEADER`
+has to be read after every header the assembler lays down, and `main` is the only code that
+comes after all the `%include` lines.
 
-A word defined after that cell is still chained: its link points back at the word before it.
-No walk reaches it, though, because every walk starts at `latest`. Nothing reports this. The
-source assembles, the binary links, and FIND returns 0 for a name that is in the dictionary.
-A new word goes before the `latest` cell, not after it.
+A header laid down after that line in source order would still be chained, but no walk would
+reach it, and nothing reports that: the source assembles, the binary links, and FIND returns 0
+for a name that is in the dictionary. Every word lives in an included file, and all of those
+come before `main`, so a new word is reachable wherever it is added.
 
 ## FIND
 
@@ -80,8 +90,16 @@ and a length, and leaves no flag, because the flags of a word are readable at `[
 `EXECUTE ( xt -- )` takes an execution token off the data stack and jumps through its code
 field. It is NEXT's last instruction with the token taken from the stack instead of the thread.
 
-## What is not here yet
+## Headers built while mforth runs
 
-Nothing builds a header while the program runs. HERE, ALLOT and CREATE arrive with ticket 006,
-and until then every header is assembled by one of the two macros. `latest` is a fixed cell,
-not a variable the compiler updates.
+`create_header` in `src/compiler.asm` writes this same layout for a word a person defines, and
+writes the new header's address into `latest`. The two macros and that subroutine are the only
+code that writes a header. `docs/system/compiler.md` covers it.
+
+The chain therefore crosses two sections. A compiled header sits in the `.bss` region
+`dictionary_space` and links back to INTERPRET, the last header the assembler laid down in
+`.data`. `find_name` walks across the join without knowing it is there.
+
+`find_name` reaches a header's flags cell by calling `header_flags` in `src/compiler.asm`
+rather than doing the name-rounding arithmetic itself. `create_header`, `:` and `;` call the
+same subroutine, so the rounding is written once in code and once in the macro.

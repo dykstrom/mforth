@@ -1,6 +1,6 @@
-; The words mforth knows by name. LIT, the three stack words and the two
-; arithmetic words are nothing but assembly; the rest go through libc or
-; through the dictionary.
+; The words mforth knows by name. Most of them are nothing but assembly: they
+; move cells between the two stacks, do arithmetic on them, or read and write
+; memory. The few at the end go through libc or through the dictionary.
 ;
 ; Every word here is defined with the defcode macro from
 ; include/dictionary.inc, which lays down the header, the code field, and the
@@ -68,6 +68,44 @@
         mov     [DSP], rdx
         NEXT
 
+; OVER ( n1 n2 -- n1 n2 n1 ) copies the second item to the top.
+;
+; DUP copies the top item; OVER reaches one cell further down. Between them a
+; word can get at either of the two items it was given without losing the
+; other, which is why these two are the stack words that have to be assembly.
+        defcode "OVER", over
+        mov     rax, [DSP + 8]          ; n1, the item under the top
+        sub     DSP, 8                  ; make room for the copy
+        mov     [DSP], rax
+        NEXT
+
+; ROT ( n1 n2 n3 -- n2 n3 n1 ) brings the third item up to the top.
+;
+; The three move round by one place, and the item that was deepest is the one
+; that comes out on top. A word given three arguments uses ROT to reach the
+; one it cannot otherwise see.
+        defcode "ROT", rot
+        mov     rax, [DSP + 16]         ; n1, the third item down
+        mov     rcx, [DSP + 8]          ; n2, the second
+        mov     rdx, [DSP]              ; n3, the top
+        mov     [DSP + 16], rcx
+        mov     [DSP + 8], rdx
+        mov     [DSP], rax
+        NEXT
+
+; DEPTH ( -- n ) leaves how many items were on the data stack before it ran.
+;
+; The stack grows downward from data_stack_top, so the distance between that
+; label and DSP is how much of the stack is in use. The count is worked out
+; before the push, so DEPTH on an empty stack leaves 0 rather than 1.
+        defcode "DEPTH", depth
+        mov     rax, data_stack_top
+        sub     rax, DSP                ; how many bytes are in use
+        shr     rax, 3                  ; eight bytes to a cell
+        sub     DSP, 8
+        mov     [DSP], rax
+        NEXT
+
 ; + ( n1 n2 -- n3 ) leaves the sum of the top two items.
         defcode "+", plus
         mov     rax, [DSP]              ; n2, the top item
@@ -83,6 +121,202 @@
         mov     rax, [DSP]              ; n2, the top item
         add     DSP, 8                  ; drop it
         sub     [DSP], rax              ; take it from the one underneath
+        NEXT
+
+; * ( n1 n2 -- n3 ) leaves the product of the top two items.
+;
+; imul here is the two-operand form, which keeps the low 64 bits of the product
+; and throws the high half away. That is the same wrap-around every other
+; arithmetic word has, and a Forth cell is 64 bits wide.
+        defcode "*", star
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        imul    rax, [DSP]              ; multiply by the one underneath
+        mov     [DSP], rax
+        NEXT
+
+; /MOD ( n1 n2 -- rem quot ) divides n1 by n2 and leaves both answers.
+;
+; Division produces two results and Forth has a stack, so the word leaves both
+; rather than choosing. The remainder goes under the quotient, which is the
+; order that lets a caller DROP the one it does not want.
+;
+; idiv wants the dividend in rdx:rax, so cqo copies the sign of rax through
+; the whole of rdx first. Divide by zero raises SIGFPE and kills the process:
+; nothing checks for it, in the same way nothing checks the stacks.
+;
+; The standard has two divisions, one rounding toward zero and one toward
+; negative infinity, and lets /MOD follow either. mforth follows idiv, which
+; rounds toward zero: -7 2 /MOD leaves -1 and -3.
+        defcode "/MOD", slash_mod
+        mov     rcx, [DSP]              ; n2, the divisor
+        mov     rax, [DSP + 8]          ; n1, the dividend
+        cqo                             ; sign-extend rax through rdx:rax
+        idiv    rcx                     ; quotient in rax, remainder in rdx
+        mov     [DSP + 8], rdx          ; the remainder goes underneath
+        mov     [DSP], rax              ; the quotient on top
+        NEXT
+
+; A flag in Forth is a cell like any other. False is 0 and true is -1, which is
+; every bit set, so that AND, OR and INVERT work on flags as well as on
+; numbers: INVERT turns true into false exactly because -1 flips to 0.
+;
+; setcc writes a byte holding 1 or 0. Negating that is what turns the 1 into
+; the all-bits answer Forth wants, so each of the three words below zeroes a
+; register, sets its low byte, and negates the whole of it.
+
+; = ( n1 n2 -- flag ) leaves true when the two items are equal.
+        defcode "=", equals
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        xor     ecx, ecx                ; the flag, false so far
+        cmp     [DSP], rax              ; n1 against n2
+        sete    cl
+        neg     rcx                     ; 1 becomes -1, and 0 stays 0
+        mov     [DSP], rcx
+        NEXT
+
+; < ( n1 n2 -- flag ) leaves true when n1 is less than n2.
+;
+; setl is the signed comparison. mforth has no unsigned words, so every number
+; on the stack is a signed 64-bit cell.
+        defcode "<", less_than
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        xor     ecx, ecx
+        cmp     [DSP], rax              ; n1 against n2
+        setl    cl
+        neg     rcx
+        mov     [DSP], rcx
+        NEXT
+
+; > ( n1 n2 -- flag ) leaves true when n1 is greater than n2.
+        defcode ">", greater_than
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        xor     ecx, ecx
+        cmp     [DSP], rax              ; n1 against n2
+        setg    cl
+        neg     rcx
+        mov     [DSP], rcx
+        NEXT
+
+; AND ( n1 n2 -- n3 ) leaves the bitwise and of the top two items.
+;
+; This is the bitwise operation, not a logical one. On flags it is the logical
+; one as well, because true is every bit set and false is none of them.
+        defcode "AND", and
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        and     [DSP], rax              ; and it into the one underneath
+        NEXT
+
+; OR ( n1 n2 -- n3 ) leaves the bitwise or of the top two items.
+        defcode "OR", or
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        or      [DSP], rax
+        NEXT
+
+; XOR ( n1 n2 -- n3 ) leaves the bitwise exclusive or of the top two items.
+        defcode "XOR", xor
+        mov     rax, [DSP]              ; n2, the top item
+        add     DSP, 8                  ; drop it
+        xor     [DSP], rax
+        NEXT
+
+; INVERT ( n1 -- n2 ) flips every bit of the top item.
+;
+; This is the bitwise complement and not the arithmetic negation: INVERT of 1
+; is -2, not -1. NEGATE is the word that changes the sign, and ticket 008
+; writes it in Forth as INVERT followed by adding one.
+        defcode "INVERT", invert
+        not     qword [DSP]
+        NEXT
+
+; The three words below move cells between the two stacks. They are the only
+; words a programmer types that touch the return stack, and the reason to want
+; them is that the data stack has no way to reach past its top few items: a
+; value pushed out of the way on the return stack comes back untouched.
+;
+; The return stack is also where docol left the address a word returns to, and
+; EXIT reads whatever is on top. A definition that pushes onto it and does not
+; take the same number of cells back off before EXIT returns to the wrong
+; place. Nothing checks for that.
+
+; >R ( n -- ) ( R: -- n ) moves the top of the data stack to the return stack.
+        defcode ">R", to_r
+        mov     rax, [DSP]
+        add     DSP, 8                  ; gone from the data stack
+        sub     RSP, 8                  ; and on to the return stack
+        mov     [RSP], rax
+        NEXT
+
+; R> ( -- n ) ( R: n -- ) moves the top of the return stack back.
+        defcode "R>", r_from
+        mov     rax, [RSP]
+        add     RSP, 8
+        sub     DSP, 8
+        mov     [DSP], rax
+        NEXT
+
+; R@ ( -- n ) ( R: n -- n ) copies the top of the return stack without
+; taking it off.
+;
+; This is to the return stack what DUP is to the data stack, and it is how a
+; word reads the value it pushed with >R while it is still parked there.
+        defcode "R@", r_fetch
+        mov     rax, [RSP]
+        sub     DSP, 8
+        mov     [DSP], rax
+        NEXT
+
+; The four words below are how Forth reaches memory. An address is a number
+; like any other, so it travels on the data stack, and these words are the
+; only ones that follow it. A cell is eight bytes; @ and ! move a whole one,
+; C@ and C! move a single byte.
+;
+; Nothing checks that an address is one mforth may touch. @ on a number that
+; is not an address reads whatever is there or kills the process.
+
+; @ ( addr -- n ) leaves the cell stored at addr.
+        defcode "@", fetch
+        mov     rax, [DSP]              ; the address
+        mov     rax, [rax]              ; the cell it points at
+        mov     [DSP], rax              ; which replaces it on the stack
+        NEXT
+
+; ! ( n addr -- ) stores n in the cell at addr.
+;
+; The address is on top and the value under it, which is the order the two are
+; typed: 42 x ! puts 42 in x.
+        defcode "!", store
+        mov     rax, [DSP]              ; addr, the top item
+        mov     rcx, [DSP + 8]          ; n, the value under it
+        mov     [rax], rcx
+        add     DSP, 16                 ; both items are gone
+        NEXT
+
+; C@ ( addr -- c ) leaves the byte stored at addr.
+;
+; movzx fills the rest of the cell with zeros, so a byte read back is never
+; negative. This is the word that reads a character out of a name or a line
+; of input.
+        defcode "C@", c_fetch
+        mov     rax, [DSP]              ; the address
+        movzx   rax, byte [rax]         ; one byte, widened to a cell
+        mov     [DSP], rax
+        NEXT
+
+; C! ( c addr -- ) stores the low byte of c at addr.
+;
+; The seven bytes above it are left alone. A c larger than a byte loses its
+; top, and nothing reports that.
+        defcode "C!", c_store
+        mov     rax, [DSP]              ; addr, the top item
+        mov     rcx, [DSP + 8]          ; c, the value under it
+        mov     [rax], cl               ; the low byte of it only
+        add     DSP, 16                 ; both items are gone
         NEXT
 
 ; . ( n -- ) prints the top of the data stack, followed by one space.

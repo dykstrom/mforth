@@ -41,6 +41,12 @@ a word that does use the machine stack must restore it before reaching NEXT. The
 `find_name` and `refill` each push rbp on entry and pop it before they return, which both
 saves the caller's rbp and keeps the alignment for the libc call they make.
 
+Every subroutine called with `call` carries a register table in its comment: an `in` row for
+each argument register and an `out` row for each result register. `find_name` in
+`src/words.asm` has one, and so do `refill`, `parse_word` and `to_number` in `src/outer.asm`.
+`docol` carries one as well, although a jump reaches it rather than a `call`, because NEXT
+hands it the execution token in W.
+
 Both stacks are 65536-byte `.bss` regions in `src/inner.asm`. They grow downward and their
 pointer holds the address of the top item. Neither is checked for overflow or underflow.
 

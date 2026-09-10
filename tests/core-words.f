@@ -1,0 +1,13 @@
+2 3 * .
+7 2 /MOD . .
+-7 2 /MOD . .
+1 1 = . 1 2 = .
+1 2 < . 2 1 > .
+12 10 AND . 12 10 OR . 12 10 XOR .
+0 INVERT . -1 INVERT .
+1 2 OVER . . .
+1 2 3 ROT . . .
+DEPTH . 7 8 DEPTH . DROP DROP DEPTH .
+5 >R R@ . R> .
+WORD XXXXXXXX DROP DUP 42 SWAP ! @ .
+WORD Q DROP DUP 65 SWAP C! C@ .

@@ -93,4 +93,4 @@ latest:
         section .rodata
 
 ; puts expects a NUL-terminated string and adds the newline itself.
-banner: db      "mforth 0.4.0", 0
+banner: db      "mforth 0.5.0", 0

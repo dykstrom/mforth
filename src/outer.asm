@@ -242,6 +242,74 @@ to_number:
         mov     [DSP], rdx              ; how many there are
         NEXT
 
+; \ ( -- ) ends the line. Immediate.
+;
+; The rest of what was typed is a comment, so this word spends the line by
+; moving the place parse_word reads from to the end of it. INTERPRET asks for
+; the next word, gets nothing, and reads a new line.
+;
+; It has to be immediate: a comment inside a definition is read while ":" is
+; compiling, and a word that is not immediate would be appended to the body
+; instead of running.
+        defcode "\", backslash, F_IMMEDIATE
+        mov     rax, [input_length]
+        mov     [input_offset], rax
+        NEXT
+
+; ( ( -- ) ends the comment at the next ")". Immediate.
+;
+; This is the stack-effect comment every definition in lib/prelude.f carries,
+; and it is a word like any other: the space after it is what makes the line
+; "( n -- -n )" three words the interpreter never sees rather than punctuation
+; the parser knows about.
+;
+; A comment that reaches the end of the line without a ")" ends there. mforth
+; keeps one line at a time, so there is no next line for it to run into.
+        defcode "(", paren, F_IMMEDIATE
+        mov     rcx, [input_offset]
+.look_for_the_bracket:
+        cmp     rcx, [input_length]
+        jae     .the_line_ended_first
+        mov     al, [input_buffer + rcx]
+        inc     rcx
+        cmp     al, ')'
+        jne     .look_for_the_bracket
+.the_line_ended_first:
+        mov     [input_offset], rcx     ; carry on after the comment
+        NEXT
+
+; ['] ( -- ) compiles the execution token of the word named after it.
+; Immediate.
+;
+; A definition that compiles another word has to name it, and a token is an
+; address nobody can type. A number typed inside a definition becomes a LIT
+; cell and the value after it; this word lays down that same pair, with the
+; token of the name it reads as the value. So ['] 0BRANCH inside a definition
+; means "push the token of 0BRANCH when this word runs", which is what lets
+; lib/prelude.f define IF.
+;
+; It is immediate, so it runs while the definition around it is being built.
+; The name it reads is taken from the input at that moment, with parse_word,
+; the way ":" takes the name of the word being defined.
+;
+; The standard's ' is the same lookup for a word being interpreted rather than
+; compiled, and the brackets are how Forth spells "do it now". mforth has no '
+; because nothing needs one yet.
+;
+; A name no word has leaves 0 and compiles LIT 0. Nothing reports it, the same
+; answer the two stacks and the dictionary region give.
+        defcode "[']", bracket_tick, F_IMMEDIATE
+        call    parse_word              ; rax is where it starts, rdx how long
+        mov     rdi, rax
+        mov     rsi, rdx
+        call    find_name               ; the execution token, or 0
+        mov     r8, rax                 ; it has to outlive the call below
+        mov     rdi, xt_lit
+        call    comma_cell
+        mov     rdi, r8
+        call    comma_cell              ; the token itself, as LIT's value
+        NEXT
+
 ; NUMBER ( c-addr u -- n f ) turns text into a number. f is 1 when the text was
 ; one, and 0 when it was not, in which case n is 0.
 ;

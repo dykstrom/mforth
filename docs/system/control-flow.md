@@ -1,14 +1,19 @@
 # Control flow
 
-`src/control.asm`: fourteen words. `BRANCH` and `0BRANCH` move IP; `(DO)`, `(LOOP)` and `I`
-run inside a counted loop; and the nine immediate words compile the other five into a
-definition. Before this iteration IP only went forward — a cell at a time in NEXT, one more in LIT — so a
-body ran from its first cell to its `xt_exit` and nothing could jump.
+`src/control.asm`: eleven words. `BRANCH` and `0BRANCH` move IP; `(DO)`, `(LOOP)` and `I`
+run inside a counted loop; and the six immediate words compile the other three into a
+definition. Before control flow arrived IP only went forward — a cell at a time in NEXT, one
+more in LIT — so a body ran from its first cell to its `xt_exit` and nothing could jump.
 
-Forth's control structures are not syntax. `IF`, `THEN`, `LOOP` and the rest are ordinary
-words marked `F_IMMEDIATE`, so they run while the compiler is compiling, and each one does
-nothing but append a cell with `comma_cell` or store into a cell appended earlier. INTERPRET
-needs no case for any of them.
+Forth's control structures are not syntax. `THEN`, `LOOP` and the rest are ordinary words
+marked `F_IMMEDIATE`, so they run while the compiler is compiling, and each one does nothing
+but append a cell with `comma_cell` or store into a cell appended earlier. INTERPRET needs no
+case for any of them.
+
+`IF`, `ELSE` and `THEN` are not in this file. They are three lines of Forth in
+`lib/prelude.f`, and they do exactly what the words here do — see `docs/system/prelude.md`.
+`BRANCH` and `0BRANCH` cannot move, because moving IP is what only assembly can do. The loops
+could and did not: `docs/adr/0009-control-structures-in-the-prelude.md` records why.
 
 ## The two branch words
 
@@ -22,16 +27,19 @@ patch is one store with no arithmetic: `THEN` writes HERE into the cell and is d
 jonesforth stores a relative offset, which would let a compiled definition be moved in memory.
 mforth never moves one. See `docs/adr/0008-branch-targets-are-absolute-addresses.md`.
 
-`0BRANCH` is the only conditional in the system. `IF`, `UNTIL` and `WHILE` all compile it.
-Jumping on false rather than true is what makes `IF` read forwards: `IF` compiles a jump
-*over* the code it guards, so a false flag skips it.
+`0BRANCH` is the only conditional in the system. `UNTIL` and `WHILE` compile it here, and `IF`
+compiles it from the prelude. Jumping on false rather than true is what makes `IF` read
+forwards: `IF` compiles a jump *over* the code it guards, so a false flag skips it.
 
 ## Holes and targets
 
 Two kinds of address travel on the data stack between an opening word and its closing word:
 
-- A **hole** — the address of a placeholder cell that a later word overwrites with HERE. `IF`, `ELSE` and `WHILE` leave one.
+- A **hole** — the address of a placeholder cell that a later word overwrites with HERE. `WHILE` leaves one, and so do `IF` and `ELSE` in the prelude.
 - A **target** — an address already known, compiled as something to jump back to. `BEGIN` and `DO` leave one.
+
+The first three rows below are the prelude's; the rest are this file's. The kinds of address
+are the same either way, which is why the words can live in either place.
 
 | Word | Compiles | Data stack |
 |------|----------|-----------|
@@ -47,7 +55,8 @@ Two kinds of address travel on the data stack between an opening word and its cl
 
 `ELSE` does two jobs: it compiles the jump that carries the true part over the false part, and
 it fills `IF`'s hole with the address after its own placeholder, so `IF`'s jump lands at the
-start of the false part.
+start of the false part. In Forth that reads `SWAP HERE SWAP !`, and the address after the
+placeholder is just HERE once the placeholder has been appended.
 
 `REPEAT` compiles the jump back to `BEGIN` *before* it fills `WHILE`'s hole, so leaving the
 loop lands after that jump. It holds both addresses in r8 and r9 across its two `comma_cell`

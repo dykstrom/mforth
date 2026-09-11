@@ -4,10 +4,15 @@
 ; more in LIT. BRANCH and 0BRANCH are what put it somewhere else, and every
 ; conditional and loop in Forth is built out of those two.
 ;
-; The point worth saying aloud is that IF, ELSE, THEN and the rest are not
+; The point worth saying aloud is that BEGIN, UNTIL, DO and the rest are not
 ; syntax. They are ordinary words, marked immediate so that they run while the
 ; compiler is compiling, and each one does nothing but append a cell or store
 ; into a cell appended earlier. The compiler needs no case for any of them.
+;
+; IF, ELSE and THEN were here in ticket 007 and are in lib/prelude.f now, three
+; lines of Forth doing what the words below do in assembly. Nothing was lost in
+; the move, which is the point of making it. The loops stayed so that a reader
+; can hold the two versions side by side.
 
         section .text
 
@@ -28,10 +33,10 @@
 ; 0BRANCH ( flag -- ) jumps to the address stored in the cell after it when
 ; flag is 0, and carries on past that cell when it is not.
 ;
-; This is the conditional, and it is the only one: IF, UNTIL and WHILE all
-; compile this same word. Jumping when the flag is false rather than true is
-; what makes IF read forwards - IF compiles a jump over the code it guards, so
-; a false flag skips it.
+; This is the conditional, and it is the only one: UNTIL and WHILE compile it
+; here, and IF compiles it from the prelude. Jumping when the flag is false
+; rather than true is what makes IF read forwards - IF compiles a jump over the
+; code it guards, so a false flag skips it.
         defcode "0BRANCH", zero_branch
         mov     rax, [DSP]              ; the flag
         add     DSP, 8                  ; drop it
@@ -47,7 +52,8 @@
 ; data stack between them, and telling them apart is the whole trick:
 ;
 ;   a hole     the address of a placeholder cell that a later word overwrites
-;              with HERE. IF, ELSE and WHILE leave one.
+;              with HERE. WHILE leaves one, and so do IF and ELSE in the
+;              prelude.
 ;   a target   an address already known, to be compiled as something to jump
 ;              back to. BEGIN and DO leave one.
 ;
@@ -55,50 +61,6 @@
 ; anything at all. A stray THEN stores a cell at whatever address was on the
 ; data stack, and IF ... UNTIL compiles without complaint. That is the answer
 ; the two stacks, the dictionary region and @ all already give.
-
-; IF ( -- hole ) compiles a jump over the code it guards. Immediate.
-;
-; The target of that jump is not known yet: it is wherever THEN turns out to
-; be. So IF compiles a placeholder and leaves its address for THEN to fill in.
-        defcode "IF", if, F_IMMEDIATE
-        mov     rdi, xt_zero_branch
-        call    comma_cell
-        mov     rax, [here]             ; where the placeholder is about to go
-        sub     DSP, 8
-        mov     [DSP], rax              ; leave the hole for THEN or ELSE
-        xor     edi, edi
-        call    comma_cell              ; the placeholder itself
-        NEXT
-
-; ELSE ( hole1 -- hole2 ) ends the true part and begins the false one.
-; Immediate.
-;
-; Two things have to happen here. The true part, having run, must jump over the
-; false part, so ELSE compiles a BRANCH with a placeholder of its own. And IF's
-; jump must land here, after that BRANCH, so ELSE fills IF's hole with HERE.
-        defcode "ELSE", else, F_IMMEDIATE
-        mov     rdi, xt_branch
-        call    comma_cell
-        mov     rax, [here]             ; where ELSE's own placeholder goes
-        mov     rcx, [DSP]              ; hole1, the one IF left
-        mov     [DSP], rax              ; hole2 replaces it for THEN
-        lea     rdx, [rax + 8]          ; the false part starts after the hole
-        mov     [rcx], rdx              ; IF's jump lands there
-        xor     edi, edi
-        call    comma_cell              ; ELSE's placeholder
-        NEXT
-
-; THEN ( hole -- ) marks where the jump before it lands. Immediate.
-;
-; It compiles nothing. All it does is store the address it is standing at into
-; the hole that IF or ELSE left, which is why a conditional costs no run-time
-; work beyond the one 0BRANCH.
-        defcode "THEN", then, F_IMMEDIATE
-        mov     rcx, [DSP]              ; the hole
-        add     DSP, 8
-        mov     rax, [here]             ; where we are now
-        mov     [rcx], rax
-        NEXT
 
 ; BEGIN ( -- target ) marks the top of a loop. Immediate.
 ;

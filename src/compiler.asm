@@ -296,3 +296,19 @@ create_header:
         mov     qword [rax], 0          ; findable from now on
         mov     qword [state], 0        ; back to running what is read
         NEXT
+
+; IMMEDIATE ( -- ) marks the word just defined immediate.
+;
+; It is typed after ";" rather than given to ":", because ";" clears the whole
+; flags cell to drop F_HIDDEN and would clear this with it. That is why Forth
+; writes "; IMMEDIATE" and not ": IMMEDIATE FOO".
+;
+; This word is what lets lib/prelude.f define IF, ELSE and THEN, which have to
+; run while the compiler is compiling. Until ticket 008 the only way to set the
+; flag was the third argument of defcode, which an assembly word can use and a
+; word a person defines cannot.
+        defcode "IMMEDIATE", immediate
+        mov     rdi, [latest]
+        call    header_flags
+        or      qword [rax], F_IMMEDIATE
+        NEXT

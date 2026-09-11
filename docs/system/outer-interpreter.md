@@ -106,9 +106,19 @@ compiling or not.
 | `WORD` | `( -- c-addr u )` | Wraps `parse_word`. u is 0 when the line is spent. |
 | `NUMBER` | `( c-addr u -- n f )` | Wraps `to_number`. The standard spells this `>NUMBER` and converts as far as it can; mforth answers about the whole text. |
 | `INTERPRET` | `( -- )` | Handles one word, then loops. Runs it or compiles it, per the table above. |
+| `\` | `( -- )` | Spends the rest of the line. Immediate. |
+| `(` | `( -- )` | Spends the input up to the next `)`. Immediate. |
+| `[']` | `( -- )` | Compiles `LIT` and the execution token of the name after it. Immediate. |
 
-These four are `defcode` definitions like every other word, and they are here rather than in
-`src/words.asm` because they are the interpreter's own vocabulary. The rest of the words are
+These seven are `defcode` definitions like every other word, and they are here rather than in
+`src/words.asm` because they are the interpreter's own vocabulary. `\` and `(` are the comment
+words. Both move `input_offset`, which is the only state a comment touches, and both are
+immediate so that a comment inside a definition is read rather than compiled. `lib/prelude.f`
+is what they exist for; see `docs/system/prelude.md`.
+
+`[']` is here for the same reason: it reads a name with `parse_word`. It is what lets a
+definition name another word's execution token, which is how `lib/prelude.f` defines `IF`.
+A name no word has leaves 0, and `LIT 0` is compiled without a word about it. The rest of the words are
 in `docs/system/core-words.md`.
 
 INTERPRET does not use KEY. KEY reads from the same buffer, and it does not call `refill`,
@@ -116,8 +126,8 @@ because a KEY that read a new line would swallow the line the person is about to
 
 ## Testing
 
-`tests/interpreter.f` is fed to mforth on standard input by `tests/run.sh`, and the output is
-diffed against `tests/interpreter.expected`. It covers `+`, `-`, a stack word, and an unknown
+`tests/interpreter.f` is fed to mforth on standard input by `tests/run.sh`, behind
+`lib/prelude.f`, and the output is diffed against `tests/interpreter.expected`. It covers `+`, `-`, a stack word, and an unknown
 word followed by a word that must not run. `tests/core-words.f` covers the rest of the
 vocabulary, and
 `tests/colon-definitions.f` covers the compiler and the two halves above.
@@ -127,8 +137,8 @@ Trailing spaces in the expected file are significant. `.` prints a space after t
 
 ## What is not here yet
 
-There is no BASE, no way to load a file other than piping it on standard input, and no check
-on either stack.
+There is no BASE, no word that loads a file — the shell pipes `lib/prelude.f` in — and no
+check on either stack.
 
 The control structures arrived with ticket 007 and live in `src/control.asm`; see
 `docs/system/control-flow.md`. They need nothing from INTERPRET, because an immediate word is

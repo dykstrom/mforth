@@ -4,9 +4,13 @@
 # test" from the repository root, which is where the paths below start.
 #
 # A test is a file tests/<name>.expected holding the output mforth must
-# produce. When tests/<name>.f exists, it is fed to mforth on standard
-# input; otherwise mforth reads nothing, which it takes as end of input
-# and leaves at once.
+# produce. lib/prelude.f is fed to mforth first, the way "make run" feeds
+# it, so a test may use the words defined there. tests/<name>.f follows
+# when it exists; otherwise mforth reaches the end of the input after the
+# prelude and leaves.
+#
+# The prelude answers every one of its own lines with " ok", so each
+# .expected file begins with the banner and then that block.
 
 set -u
 
@@ -22,7 +26,7 @@ for expected in tests/*.expected; do
     fi
 
     actual=$(mktemp)
-    "$mforth" < "$input" > "$actual"
+    cat lib/prelude.f "$input" | "$mforth" > "$actual"
 
     if diff -u "$expected" "$actual"; then
         echo "ok   $name"

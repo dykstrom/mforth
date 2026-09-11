@@ -11,9 +11,19 @@ mforth's entry point is `main`, not `_start`. libc's startup code runs first and
 which is what makes `puts` and the rest of libc available.
 
 `make test` runs `tests/run.sh` from the repository root. Each `tests/<name>.expected` holds
-the output mforth must produce. When `tests/<name>.f` exists it is fed to mforth on standard
-input; otherwise mforth reads `/dev/null`. The runner prints one line per test, shows a
-`diff -u` for each failure, and exits non-zero if any test failed.
+the output mforth must produce. The runner feeds `lib/prelude.f` first and then
+`tests/<name>.f` when that file exists, with `cat lib/prelude.f "$input" | "$mforth"`, so a
+test may use the words the prelude defines. A test with no `.f` file gets `/dev/null` as the
+second half. The runner prints one line per test, shows a `diff -u` for each failure, and
+exits non-zero if any test failed.
+
+`make run` pipes the same file in ahead of the terminal: `cat lib/prelude.f - | ./build/mforth`.
+mforth has no word that loads a file, so both commands hand the work to the shell. See
+`docs/system/prelude.md`.
+
+INTERPRET answers every line it reads with ` ok`, the prelude's comment lines included, so
+every `tests/*.expected` file begins with the banner and then one ` ok` line per line of
+`lib/prelude.f`. Adding a line to the prelude changes the output of all five tests.
 
 Expectation files end in `.expected`, not `.out`. `.gitignore` ignores `*.out` as a build
 artifact, so a test named `<name>.out` would be left out of the repository without warning.

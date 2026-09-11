@@ -83,6 +83,7 @@ keeps its value in `r8` across the first call, and `REPEAT` holds two addresses 
 | `CREATE` | `( c-addr u -- )` | Lays down the header of a word of that name. |
 | `:` | `( -- )` | Starts a definition. |
 | `;` | `( -- )` | Ends a definition. Immediate. |
+| `IMMEDIATE` | `( -- )` | Marks the word just defined immediate. |
 
 `HERE` leaves the value of its cell and `STATE` leaves the address of its cell. That asymmetry
 is the standard's. `STATE @` is how a program reads the state, using the `@` from ticket 005.
@@ -112,10 +113,16 @@ new header, writes `docol` into the code field with `comma_cell`, and stores -1 
 `;` has to be immediate. Every other word on the line is appended to the body, and if `;` were
 appended too then nothing would end the definition.
 
-`;` was the only immediate word until ticket 007. The ten control-structure words in
-`src/control.asm` are all immediate too, and all of them are built out of `comma_cell` and
-stores into cells it appended — see `docs/system/control-flow.md`. The compiler needs no case
-for any of them: `INTERPRET` runs an immediate word and the word does the rest.
+`;` was the only immediate word until ticket 007. The six control-structure words in
+`src/control.asm` are immediate too, and so are `IF`, `ELSE` and `THEN` in `lib/prelude.f`.
+All nine are built out of `comma_cell`, or `,` which wraps it, and stores into cells they
+appended — see `docs/system/control-flow.md`. The compiler needs no case for any of them:
+`INTERPRET` runs an immediate word and the word does the rest.
+
+`IMMEDIATE` is how a word defined with `:` gets the flag, and it is written after `;`, as in
+`: THEN HERE SWAP ! ; IMMEDIATE`. It cannot be part of `:`, because `;` clears the whole flags
+cell to drop `F_HIDDEN`. It sets `F_IMMEDIATE` on `latest` through `header_flags`, which is
+the same arithmetic `:` and `;` use.
 
 `EXIT` is compiled before the hidden flag is cleared, so the name does not become findable
 until the body behind it is complete.

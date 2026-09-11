@@ -32,8 +32,12 @@ build:
 test: all
 	tests/run.sh
 
+# The prelude and the terminal are one stream on standard input: cat sends
+# lib/prelude.f first and then "-", which is the terminal. The words the
+# prelude defines are there before anyone types, and Ctrl-D still ends the
+# session. mforth has no word that loads a file; the shell does the work.
 run: all
-	./build/mforth
+	cat lib/prelude.f - | ./build/mforth
 
 clean:
 	rm -rf build

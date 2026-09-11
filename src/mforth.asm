@@ -22,6 +22,7 @@
 %include "src/inner.asm"                ; the two stacks, docol and EXIT
 %include "src/words.asm"                ; LIT, DUP, ., FIND, EXECUTE and more
 %include "src/compiler.asm"             ; HERE, CREATE, ":" and ";"
+%include "src/control.asm"              ; BRANCH, IF, BEGIN, DO and the rest
 %include "src/outer.asm"                ; the loop that reads and runs a line
 
         section .text
@@ -61,4 +62,4 @@ main:
         section .rodata
 
 ; puts expects a NUL-terminated string and adds the newline itself.
-banner: db      "mforth 0.6.0", 0
+banner: db      "mforth 0.7.0", 0

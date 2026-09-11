@@ -94,7 +94,8 @@ buffer.
 
 `NEGATE`, `ABS`, `MOD`, `/`, `NIP`, `TUCK`, `?DUP`, `0=`, `0<`, `1+`, `1-` and `2*` can all be
 built from the words above, so they are not here. Ticket 008 defines them in Forth, and that
-they can be is the point that ticket makes. `VARIABLE` and `CONSTANT` are not here either;
+they can be is the point that ticket makes; the ones that need a conditional can be written
+now that `src/control.asm` has `IF`. `VARIABLE` and `CONSTANT` are not here either;
 `docs/system/compiler.md` lists what the compiler does define.
 
 ## Testing

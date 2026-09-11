@@ -26,7 +26,9 @@ A word written in Forth returns the same way, because `docol` saves IP and EXIT 
 Nothing in a word knows it was reached from the interpreter rather than from a thread.
 
 A standard Forth calls this loop QUIT and writes it in Forth as `INTERPRET` followed by a
-branch back. mforth cannot until BRANCH arrives with ticket 007.
+branch back. `BRANCH` exists since ticket 007, so mforth could. It does not:
+`docs/adr/0005-interpreter-loop-in-one-cell-of-thread.md` records the loop being data rather
+than a word, and a Forth-level QUIT would supersede that decision.
 
 ## Reading and splitting
 
@@ -125,10 +127,9 @@ Trailing spaces in the expected file are significant. `.` prints a space after t
 
 ## What is not here yet
 
-There are no control structures. IF, ELSE, THEN and the loops need a branch word and a
-compile-time stack, and arrive with ticket 007. Until then the loop INTERPRET runs cannot be
-written in Forth, which is what
-`docs/adr/0005-interpreter-loop-in-one-cell-of-thread.md` records.
-
 There is no BASE, no way to load a file other than piping it on standard input, and no check
 on either stack.
+
+The control structures arrived with ticket 007 and live in `src/control.asm`; see
+`docs/system/control-flow.md`. They need nothing from INTERPRET, because an immediate word is
+run by the branch INTERPRET already had.

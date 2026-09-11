@@ -5,8 +5,7 @@
 ; word either runs the word of that name or pushes the number the text spells.
 ; That loop is the whole of what an interactive Forth does.
 ;
-; Branch words arrive with ticket 007, so this loop cannot yet be written in
-; Forth. It is one cell of thread instead:
+; This loop is one cell of thread rather than a word written in Forth:
 ;
 ;                    section .data
 ;
@@ -16,7 +15,11 @@
 ;
 ; INTERPRET points IP back at that cell before it does anything else, so every
 ; word it runs returns to it through that word's own NEXT. A real Forth calls
-; this loop QUIT and writes it in Forth; ticket 007 is where mforth could.
+; this loop QUIT and writes it in Forth as INTERPRET followed by a branch back.
+; BRANCH exists now, in src/control.asm, so mforth could. It does not: the loop
+; being data rather than a word is a decision of its own, recorded in
+; docs/adr/0005-interpreter-loop-in-one-cell-of-thread.md, and changing it
+; would supersede that decision rather than edit it.
 
         extern  getchar                 ; getchar(void)
 

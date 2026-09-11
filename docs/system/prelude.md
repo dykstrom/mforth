@@ -1,7 +1,7 @@
 # The prelude
 
-`lib/prelude.f` is the part of mforth written in Forth. It holds fifteen colon definitions:
-`IF`, `ELSE` and `THEN`, and then twelve words `src/words.asm` left out on purpose because
+`lib/prelude.f` is the part of mforth written in Forth. It holds sixteen colon definitions:
+`IF`, `ELSE` and `THEN`, and then thirteen words the assembly left out on purpose because
 each one is built from words that are already there. Nothing in it is new machinery — it is
 the same text a person could type at the terminal, kept in a file.
 
@@ -10,13 +10,20 @@ the same text a person could type at the terminal, kept in a file.
 mforth has no word that opens a file. The shell does the work, and `make run` is the command:
 
 ```
-cat lib/prelude.f - | ./build/mforth
+{ cat lib/prelude.f; sed -u ''; } | ./build/mforth
 ```
 
-`cat` sends the file and then `-`, which is the terminal, so both arrive as one stream on
-standard input. The outer interpreter reads the definitions first and what the person types
-after, and Ctrl-D still ends the session. `tests/run.sh` does the same with
+The file goes first and what the person types follows, so both arrive as one stream on
+standard input. The outer interpreter reads the definitions first and the terminal after, and
+Ctrl-D still ends the session. `tests/run.sh` does the same with
 `cat lib/prelude.f tests/<name>.f`, so a test may use these words.
+
+The terminal half is `sed -u ''` and not the `-` argument of `cat`, which is what it was until
+the buffering was found. The `cat` on Ubuntu 26.04 is the Rust uutils one, and when its output
+is a pipe it holds what it reads from the terminal until the buffer fills. A line typed at
+`make run` reached mforth only at Ctrl-D. `sed -u` flushes a line at a time, and the empty
+script changes nothing on the way past. `tests/run.sh` is not affected: no terminal is
+involved there, and the runner compares the output after mforth has ended.
 
 ## The conditional
 
@@ -76,14 +83,15 @@ Together they are what a person needs to write a compiling word, and until this 
 | `ABS` | `( n -- \|n\| )` | `DUP 0< IF NEGATE THEN` |
 | `/` | `( n1 n2 -- quot )` | `/MOD NIP` |
 | `MOD` | `( n1 n2 -- rem )` | `/MOD DROP` |
+| `SPACE` | `( -- )` | `32 EMIT` |
 
 The definitions are ordered so that each one uses only the words above it: `?DUP` and `ABS`
 use the `IF` and `THEN` at the top of the file, `ABS` calls the `NEGATE` two lines up, and `/`
 calls `NIP`. `/` and `MOD` each throw away one half of what
 `/MOD` leaves, which is why `src/words.asm` defines the one word and not the three.
 
-`SPACE` is not here. It needs `EMIT`, which arrives with ticket 009, and it joins the prelude
-then.
+`SPACE` waited for `EMIT`, which arrived with ticket 009 in `src/strings.asm` because it
+calls libc. It is the one line of the prelude that prints.
 
 ## Comments
 
@@ -111,6 +119,6 @@ assembly versions in ticket 007 and passes unchanged against these, which is the
 about the move.
 
 INTERPRET answers every line with ` ok`, including a line holding nothing but a comment, so
-the prelude prints one for each of its 49 lines before anything else runs. Every
+the prelude prints one for each of its 50 lines before anything else runs. Every
 `tests/*.expected` file begins with the banner and then that block. Adding a line to the
-prelude means regenerating all five of them, the same way raising the version does.
+prelude means regenerating all six of them, the same way raising the version does.

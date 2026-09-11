@@ -21,7 +21,7 @@
 
 ## Changing it
 
-- A change to `lib/prelude.f` MUST regenerate all five `tests/*.expected`
+- A change to `lib/prelude.f` MUST regenerate all six `tests/*.expected`
   files in the same change. INTERPRET answers every line it reads with ` ok`,
   comment lines included, and `tests/run.sh` feeds the prelude to every test,
   so one added line changes the output of all of them. See

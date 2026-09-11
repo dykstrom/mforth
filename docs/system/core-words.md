@@ -40,12 +40,17 @@ The words KEY, WORD, NUMBER and INTERPRET are also `defcode` definitions, but th
 | | `C!` | `( c addr -- )` |
 | Output | `.` | `( n -- )` |
 | | `CR` | `( -- )` |
+| | `EMIT` | `( c -- )`, in `src/strings.asm` |
+| | `TYPE` | `( c-addr u -- )`, in `src/strings.asm` |
 | Dictionary | `FIND` | `( c-addr u -- xt )` |
 | | `EXECUTE` | `( xt -- )` |
 | Leaving | `BYE` | `( -- )` |
 
 `.`, `CR` and `BYE` go through libc `printf`, `putchar` and `exit`. `FIND` and `EXECUTE` are
 covered by `docs/system/dictionary.md`, `LIT` by `docs/system/inner-interpreter.md`.
+
+The output words continue in `src/strings.asm`, which ticket 009 added: `EMIT`, `TYPE`, `."`
+and the two words that print what mforth is holding. `docs/system/strings.md` describes them.
 
 ## Flags
 

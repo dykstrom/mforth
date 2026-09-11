@@ -32,12 +32,20 @@ build:
 test: all
 	tests/run.sh
 
-# The prelude and the terminal are one stream on standard input: cat sends
-# lib/prelude.f first and then "-", which is the terminal. The words the
-# prelude defines are there before anyone types, and Ctrl-D still ends the
-# session. mforth has no word that loads a file; the shell does the work.
+# The prelude and the terminal are one stream on standard input: the file goes
+# first and then what is typed. The words the prelude defines are there before
+# anyone types, and Ctrl-D still ends the session. mforth has no word that
+# loads a file; the shell does the work.
+#
+# The terminal half goes through "sed -u" and not through the "-" argument of
+# cat. The cat on Ubuntu 26.04 is the Rust uutils one, and when its output is a
+# pipe it holds what it reads from the terminal until the buffer fills, so a
+# line typed here would not reach mforth until Ctrl-D. sed -u copies its input
+# through and flushes it a line at a time, which is what an interpreter that
+# answers one line at a time needs. The empty script '' tells sed to change
+# nothing on the way past.
 run: all
-	cat lib/prelude.f - | ./build/mforth
+	{ cat lib/prelude.f; sed -u ''; } | ./build/mforth
 
 clean:
 	rm -rf build

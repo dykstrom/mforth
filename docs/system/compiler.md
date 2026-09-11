@@ -119,6 +119,10 @@ All nine are built out of `comma_cell`, or `,` which wraps it, and stores into c
 appended — see `docs/system/control-flow.md`. The compiler needs no case for any of them:
 `INTERPRET` runs an immediate word and the word does the rest.
 
+`."` is immediate as well, and it is the one immediate word that is not a control structure.
+It appends the token of `(.")` and then the text itself, as bytes rather than cells — see
+`docs/system/strings.md`.
+
 `IMMEDIATE` is how a word defined with `:` gets the flag, and it is written after `;`, as in
 `: THEN HERE SWAP ! ; IMMEDIATE`. It cannot be part of `:`, because `;` clears the whole flags
 cell to drop `F_HIDDEN`. It sets `F_IMMEDIATE` on `latest` through `header_flags`, which is

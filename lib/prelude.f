@@ -47,3 +47,4 @@ IMMEDIATE
 : ABS     ( n -- |n| )          DUP 0< IF NEGATE THEN ;
 : /       ( n1 n2 -- quot )     /MOD NIP ;           \ /MOD leaves rem under quot
 : MOD     ( n1 n2 -- rem )      /MOD DROP ;          \ and the quotient on top
+: SPACE   ( -- )                32 EMIT ;            \ one blank, ASCII 32

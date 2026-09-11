@@ -21,6 +21,10 @@ halves — see `docs/system/dictionary.md`. A word written in Forth points its c
 field at `docol` in `src/inner.asm` and ends its body with the execution token of EXIT.
 `docol` saves IP on the return stack and points IP at the body; EXIT puts IP back.
 
+IP moves forward by a cell in `NEXT` and by one more in `LIT`. `BRANCH` and `0BRANCH` in
+`src/control.asm` are the only words that put it anywhere else, and every conditional and loop
+in mforth is built out of those two.
+
 A word's `section` directives are inside the `defcode` and `defword` macros, so the source
 shows the word's comment and then the macro call. A directive written out in the source opens
 a region of plain storage — `.bss`, `.rodata`, the `latest` cell — and goes above the comment,

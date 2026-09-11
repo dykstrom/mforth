@@ -64,10 +64,12 @@ and nothing reads them: `FIND` compares as many characters as the length byte sa
 `header_flags` to find where the flags cell goes, which it can do once the length byte is
 written, because that byte is all `header_flags` reads.
 
-`comma_cell` is called from six places: the word `,`, the words `:` and `;`, the branch of
-`INTERPRET` that appends a token, and twice in the branch that compiles a number. It touches
-`rax` and `rdi` only, and that number branch relies on it: it keeps the value in `r8` across
-the first call.
+`comma_cell` is called from three files: here by the word `,` and by `:` and `;`, in
+`src/outer.asm` by the branch of `INTERPRET` that appends a token and twice by the branch that
+compiles a number, and in `src/control.asm` by every immediate word there that compiles
+anything. It touches `rax` and `rdi` only, and two callers rely on that: the number branch
+keeps its value in `r8` across the first call, and `REPEAT` holds two addresses in `r8` and
+`r9` across both of its calls.
 
 ## The words
 
@@ -100,8 +102,8 @@ because `:` writes `docol` there. See
 `:` takes the next word of the line as the name, calls `create_header`, sets `F_HIDDEN` on the
 new header, writes `docol` into the code field with `comma_cell`, and stores -1 in `state`.
 
-`;` compiles `xt_exit`, clears the flags cell on `latest`, and stores 0 in `state`. It is the
-one word in mforth defined with `F_IMMEDIATE`, through the third argument of `defcode`:
+`;` compiles `xt_exit`, clears the flags cell on `latest`, and stores 0 in `state`. It takes
+`F_IMMEDIATE` through the third argument of `defcode`:
 
 ```
         defcode ";", semicolon, F_IMMEDIATE
@@ -109,6 +111,11 @@ one word in mforth defined with `F_IMMEDIATE`, through the third argument of `de
 
 `;` has to be immediate. Every other word on the line is appended to the body, and if `;` were
 appended too then nothing would end the definition.
+
+`;` was the only immediate word until ticket 007. The ten control-structure words in
+`src/control.asm` are all immediate too, and all of them are built out of `comma_cell` and
+stores into cells it appended — see `docs/system/control-flow.md`. The compiler needs no case
+for any of them: `INTERPRET` runs an immediate word and the word does the rest.
 
 `EXIT` is compiled before the hidden flag is cleared, so the name does not become findable
 until the body behind it is complete.

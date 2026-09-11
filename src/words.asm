@@ -390,10 +390,17 @@
 ;         rsi   how many characters that name has
 ;   out   rax   the execution token, or 0 when no word has that name
 ;
-; memcmp gives r14, r15 and rbp back untouched, which is why the walk keeps its
-; three values in them: the header being looked at, the name being looked for,
-; and how long that name is. Nothing else in mforth holds a value in any of the
-; three, so only rbp, which the ABI counts as the caller's, is saved.
+; The walk carries three values across the call to memcmp: the header being
+; looked at, the name being looked for, and how long that name is. They live in
+; r14, r15 and rbp because the System V ABI counts all three as callee-saved,
+; so memcmp gives them back untouched. Nothing else in mforth holds a value in
+; any of the three.
+;
+; The push is what keeps the machine stack aligned. main left rsp on a 16-byte
+; boundary, and the call that reached this subroutine pushed a return address
+; onto it. Pushing one more cell puts the boundary back, so memcmp is entered
+; the way the ABI says. refill in src/outer.asm pushes rbp before it calls
+; getchar for the same two reasons.
 find_name:
         push    rbp
         mov     r15, rdi                ; the name has to outlive memcmp

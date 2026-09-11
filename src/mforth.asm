@@ -32,10 +32,11 @@
 main:
         ; The System V ABI wants the stack 16-byte aligned at a call. The
         ; call into main pushed a return address and so knocked it 8 bytes
-        ; out of alignment; subtracting 8 more puts it back. This is the only
-        ; instruction in mforth that touches rsp. No word pushes or pops on
-        ; the machine stack, so once this is done every libc call from every
-        ; word is aligned.
+        ; out of alignment; subtracting 8 more puts it back. No word touches
+        ; rsp again, so once this is done every libc call from every word is
+        ; aligned. Two subroutines do push: find_name and refill each save
+        ; rbp and pop it back before they return, and that push is what keeps
+        ; the call they make aligned in its turn.
         sub     rsp, 8
 
         ; libc decides how to buffer what a program prints by looking at where

@@ -154,8 +154,9 @@ print_text:
 ; in Forth can: the stack is where a word's arguments are, not somewhere it can
 ; walk. The subtraction is DEPTH's, in src/words.asm.
 ;
-; The walk keeps its place in r14. printf may use any of the caller-saved
-; registers, and r14 is one of the three that find_name explains are free.
+; The walk keeps its place in r14. printf may use any caller-saved register it
+; likes, and r14 is not one of them: it is callee-saved, so it comes back
+; untouched. That is the same reason find_name gives for the three it uses.
         defcode ".S", dot_s
         mov     rax, data_stack_top
         sub     rax, DSP                ; how many bytes are in use
@@ -185,8 +186,9 @@ print_text:
 ; This is find_name's walk with the comparing taken out. It starts at latest
 ; and follows each header's link back to the word defined before it, so the
 ; newest name is printed first and the oldest last. The words a person has
-; defined come first, then the twelve lib/prelude.f defines, then the assembly
-; words in the order the %includes laid them down.
+; defined come first, then the sixteen lib/prelude.f defines, then the assembly
+; words in the reverse of the order the %includes laid them down: this file is
+; included last, so its words print first and LIT prints last of all.
 ;
 ; A hidden word is printed too. The only hidden word is one a definition that
 ; failed left behind, and this is the word that shows it is there.

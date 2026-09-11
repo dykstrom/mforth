@@ -55,8 +55,10 @@ F_HIDDEN        equ 2
 ; four zeros follow them; EXECUTE's come to eight, and none do.
 ;
 ; The third argument is the flags, and it may be left off, which is why almost
-; every word below is defined with two. ";" is the one word that passes
-; F_IMMEDIATE.
+; every word in mforth is defined with two. The words that pass F_IMMEDIATE
+; are the ones that have to run while the compiler is compiling rather than be
+; compiled into what it is building: ";", the two comment words, "[']", the
+; words that build a loop, and the word that compiles text.
 %macro header 2-3 0
         section .data
 header_%2:

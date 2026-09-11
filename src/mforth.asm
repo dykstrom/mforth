@@ -79,4 +79,4 @@ main:
         section .rodata
 
 ; puts expects a NUL-terminated string and adds the newline itself.
-banner: db      "mforth 0.9.0", 0
+banner: db      "mforth 0.10.0", 0

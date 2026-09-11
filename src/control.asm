@@ -159,10 +159,11 @@
         mov     [r8], rax               ; WHILE's jump lands after that jump
         NEXT
 
-; The three words below are the counted loop. DO and LOOP are immediate and
-; compile the two that follow them; (DO) and (LOOP) are the halves that run.
-; The parentheses are Forth's own way of naming the run-time half of a
-; compiling word, and both are findable words like any other.
+; The five words below are the counted loop. (DO) and (LOOP) are the halves
+; that run and I reads the index; DO and LOOP are immediate, and each compiles
+; the half above it into the definition being built. The parentheses are
+; Forth's own way of naming the run-time half of a compiling word, and both are
+; findable words like any other.
 ;
 ; The limit and the index live on the return stack, as they do in every Forth,
 ; and that stack already holds the address docol saved and anything >R parked

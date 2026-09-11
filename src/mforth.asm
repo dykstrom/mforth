@@ -11,6 +11,8 @@
 
         global  main                    ; libc's startup code calls main
         extern  puts                    ; puts(const char *) from libc
+        extern  setvbuf                 ; setvbuf(FILE *, char *, int, size_t)
+        extern  stdout                  ; libc's FILE * for standard output
 
 ; nasm is invoked on this file alone. Everything else arrives here, so the
 ; order below is the order the assembler sees: the NEXT macro and the macros
@@ -30,6 +32,20 @@ main:
         ; the machine stack, so once this is done every libc call from every
         ; word is aligned.
         sub     rsp, 8
+
+        ; libc decides how to buffer what a program prints by looking at where
+        ; the output goes. A terminal is flushed at every newline. A pipe is
+        ; not: libc holds the characters until 4096 of them have gathered or
+        ; the process ends. mforth answers one line at a time and has to be
+        ; seen doing it, so it asks for line buffering whichever it is. Without
+        ; this, "make run" under "docker exec" without a terminal prints
+        ; nothing at all until Ctrl-D, and then prints the whole session at
+        ; once. It has to be asked before anything is printed.
+        mov     rdi, [stdout]           ; the stream to change
+        xor     esi, esi                ; libc keeps its own buffer
+        mov     edx, 1                  ; _IOLBF: flush at every newline
+        xor     ecx, ecx                ; of whatever size libc likes
+        call    setvbuf
 
         mov     rdi, banner             ; first integer argument goes in rdi
         call    puts                    ; prints the string and a newline

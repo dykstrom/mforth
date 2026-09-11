@@ -1,8 +1,9 @@
 # The compiler
 
-`src/compiler.asm`: the words that add to the dictionary while mforth runs. Before this
-iteration every dictionary entry was laid down by the `header` macro before the program
-started. Now a person types `: SQUARE DUP * ;` and the word exists.
+`src/compiler.asm`: the words that add to the dictionary while mforth runs. Every dictionary
+entry in `src/words.asm` and the files beside it was laid down by the `header` macro before the
+program started. These words are what let a person type `: SQUARE DUP * ;` and have the word
+exist.
 
 ## Where a compiled word lives
 
@@ -119,9 +120,9 @@ All nine are built out of `comma_cell`, or `,` which wraps it, and stores into c
 appended — see `docs/system/control-flow.md`. The compiler needs no case for any of them:
 `INTERPRET` runs an immediate word and the word does the rest.
 
-`."` is immediate as well, and it is the one immediate word that is not a control structure.
-It appends the token of `(.")` and then the text itself, as bytes rather than cells — see
-`docs/system/strings.md`.
+`."` is immediate as well. It appends the token of `(.")` and then the text itself, as bytes
+rather than cells — see `docs/system/strings.md`. So are `\`, `(` and `[']` in `src/outer.asm`,
+which are not control structures either; `docs/system/outer-interpreter.md` covers them.
 
 `IMMEDIATE` is how a word defined with `:` gets the flag, and it is written after `;`, as in
 `: THEN HERE SWAP ! ; IMMEDIATE`. It cannot be part of `:`, because `;` clears the whole flags

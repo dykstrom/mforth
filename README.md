@@ -44,6 +44,10 @@ Project documentation lives in [`docs/`](docs/), split by what each kind of doc 
 what the code does today (`system/`), what it must do (`architecture/`), and how the
 decisions were reached (`adr/`, `reference/`, `working-notes/`).
 
+[`docs/system/interpreter-walkthrough.md`](docs/system/interpreter-walkthrough.md) follows one
+typed line from the terminal to the answer, and names the file that covers each part it passes
+through. It is the place to start.
+
 ## License
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).

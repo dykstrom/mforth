@@ -233,8 +233,8 @@
 ; INVERT ( n1 -- n2 ) flips every bit of the top item.
 ;
 ; This is the bitwise complement and not the arithmetic negation: INVERT of 1
-; is -2, not -1. NEGATE is the word that changes the sign, and ticket 008
-; writes it in Forth as INVERT followed by adding one.
+; is -2, not -1. NEGATE is the word that changes the sign, and lib/prelude.f
+; writes it in Forth as "0 SWAP -".
         defcode "INVERT", invert
         not     qword [DSP]
         NEXT
@@ -390,10 +390,17 @@
 ;         rsi   how many characters that name has
 ;   out   rax   the execution token, or 0 when no word has that name
 ;
-; memcmp gives r14, r15 and rbp back untouched, which is why the walk keeps its
-; three values in them: the header being looked at, the name being looked for,
-; and how long that name is. Nothing else in mforth holds a value in any of the
-; three, so only rbp, which the ABI counts as the caller's, is saved.
+; The walk carries three values across the call to memcmp: the header being
+; looked at, the name being looked for, and how long that name is. They live in
+; r14, r15 and rbp because the System V ABI counts all three as callee-saved,
+; so memcmp gives them back untouched. Nothing else in mforth holds a value in
+; any of the three.
+;
+; The push is what keeps the machine stack aligned. main left rsp on a 16-byte
+; boundary, and the call that reached this subroutine pushed a return address
+; onto it. Pushing one more cell puts the boundary back, so memcmp is entered
+; the way the ABI says. refill in src/outer.asm pushes rbp before it calls
+; getchar for the same two reasons.
 find_name:
         push    rbp
         mov     r15, rdi                ; the name has to outlive memcmp
@@ -415,12 +422,13 @@ find_name:
         mov     r14, [r14]              ; the word defined before this one
         jmp     .this_word
 
-; The code field follows the header, and the execution token is its address.
-; Walking there means stepping over the length byte and the name, over the
-; padding that rounds the name up to a cell, and over the flags.
 ; The name matches. A word marked hidden is passed over even so, and the walk
 ; carries on to the word defined before it: that is what makes the name inside
 ; ": FOO FOO 1 + ;" mean the FOO that already existed.
+;
+; The code field follows the header, and the execution token is its address.
+; Walking there means stepping over the length byte and the name, over the
+; padding that rounds the name up to a cell, and over the flags.
 .found:
         mov     rdi, r14                ; the header the walk stopped at
         call    header_flags

@@ -1,9 +1,10 @@
 # Control flow
 
-`src/control.asm`: eleven words. `BRANCH` and `0BRANCH` move IP; `(DO)`, `(LOOP)` and `I`
-run inside a counted loop; and the six immediate words compile the other three into a
-definition. Before control flow arrived IP only went forward — a cell at a time in NEXT, one
-more in LIT — so a body ran from its first cell to its `xt_exit` and nothing could jump.
+`src/control.asm`: eleven words. `BRANCH` and `0BRANCH` move IP; `(DO)`, `(LOOP)` and `I` run
+inside a counted loop; and the six immediate words compile four of those five into a
+definition. Nothing compiles `I`: a programmer types it in the loop body. Before control flow
+arrived IP only went forward — a cell at a time in NEXT, one more in LIT — so a body ran from
+its first cell to its `xt_exit` and nothing could jump.
 
 Forth's control structures are not syntax. `THEN`, `LOOP` and the rest are ordinary words
 marked `F_IMMEDIATE`, so they run while the compiler is compiling, and each one does nothing

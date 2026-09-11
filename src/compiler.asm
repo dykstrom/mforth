@@ -200,7 +200,7 @@ create_header:
 ;
 ; The cell holds 0 while mforth runs the words it reads and -1 while it
 ; compiles them. STATE leaves the address and not the value, so STATE @ is how
-; a program reads it and the @ from ticket 005 does the work. That is the
+; a program reads it, and @ from src/words.asm does the work. That is the
 ; standard's shape, and it is the opposite way round from HERE above.
         defcode "STATE", state_word
         mov     rax, state
@@ -304,9 +304,9 @@ create_header:
 ; writes "; IMMEDIATE" and not ": IMMEDIATE FOO".
 ;
 ; This word is what lets lib/prelude.f define IF, ELSE and THEN, which have to
-; run while the compiler is compiling. Until ticket 008 the only way to set the
-; flag was the third argument of defcode, which an assembly word can use and a
-; word a person defines cannot.
+; run while the compiler is compiling. Without this word the only way to set
+; the flag is the third argument of defcode, which an assembly word can use and
+; a word a person defines cannot.
         defcode "IMMEDIATE", immediate
         mov     rdi, [latest]
         call    header_flags

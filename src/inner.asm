@@ -42,6 +42,11 @@ docol:
 ; carries on. Loading it back into IP is the return; the NEXT below then reads
 ; the caller's next token. A word that ends without EXIT would run straight
 ; into whatever data follows it.
+;
+; EXIT is the one word laid down without a header, which is why WORDS does not
+; print it and FIND cannot reach it. It needs an execution token, because ";"
+; compiles one into the end of every definition. It needs no name, because
+; nobody types it.
 
         section .data
 xt_exit:

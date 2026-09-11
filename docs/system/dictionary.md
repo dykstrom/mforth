@@ -14,7 +14,7 @@ field, which is what it was before headers existed.
 | 8 | 1 | Name length in bytes. |
 | 9 | the name length | The characters of the name. |
 | after the name | 0 to 7 | Zero padding, up to the next multiple of 8. |
-| | 8 | Flags. Every word holds 0 except `;`, which holds `F_IMMEDIATE`. |
+| | 8 | Flags. `F_IMMEDIATE` in a word that must run while the compiler is compiling, `F_HIDDEN` in a definition `:` has started and `;` has not finished, 0 in every other word. |
 | | 8 | Code field. The execution token points at this cell. |
 
 The flags sit after the name and not before it. A name is as long as it is, so no field after
@@ -79,9 +79,10 @@ two arguments off the data stack and the answer back onto it. The outer interpre
 reach the dictionary.
 
 `find_name` keeps three values in registers that libc gives back untouched: r14 holds the
-header it is looking at, r15 the name it is looking for, and rbp that name's length. Only rbp
-is saved and restored, because the ABI counts it as the caller's; nothing else in mforth holds
-a value in r14 or r15.
+header it is looking at, r15 the name it is looking for, and rbp that name's length. All three
+are callee-saved, which is why `memcmp` leaves them alone, and nothing else in mforth holds a
+value in any of them. The `push rbp` on entry is what puts rsp back on a 16-byte boundary for
+the call to `memcmp` — see `docs/system/inner-interpreter.md`.
 
 The Forth 2012 standard defines `FIND ( c-addr -- c-addr 0 | xt 1 | xt -1 )`: it takes a
 counted string and leaves a flag saying whether the word is immediate. mforth takes an address

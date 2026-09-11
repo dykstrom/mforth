@@ -64,8 +64,8 @@ Two words were added to assembly so that these three could be written at all:
 `[']` exists because a token is an address nobody can type, and a definition that compiles
 another word has to name it. `IMMEDIATE` comes after `;` rather than being given to `:`,
 because `;` clears the whole flags cell to drop `F_HIDDEN` and would clear the mark with it.
-Together they are what a person needs to write a compiling word, and until this iteration only
-`defcode` could make one.
+Together they are what a person needs to write a compiling word. Before they existed only
+`defcode` could make one, and only for a word written in assembly.
 
 ## The other words
 

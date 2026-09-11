@@ -9,7 +9,7 @@
 ; compiler is compiling, and each one does nothing but append a cell or store
 ; into a cell appended earlier. The compiler needs no case for any of them.
 ;
-; IF, ELSE and THEN were here in ticket 007 and are in lib/prelude.f now, three
+; IF, ELSE and THEN were here once and are in lib/prelude.f now, three
 ; lines of Forth doing what the words below do in assembly. Nothing was lost in
 ; the move, which is the point of making it. The loops stayed so that a reader
 ; can hold the two versions side by side.
@@ -121,10 +121,11 @@
         mov     [r8], rax               ; WHILE's jump lands after that jump
         NEXT
 
-; The three words below are the counted loop. DO and LOOP are immediate and
-; compile the two that follow them; (DO) and (LOOP) are the halves that run.
-; The parentheses are Forth's own way of naming the run-time half of a
-; compiling word, and both are findable words like any other.
+; The five words below are the counted loop. (DO) and (LOOP) are the halves
+; that run and I reads the index; DO and LOOP are immediate, and each compiles
+; the half above it into the definition being built. The parentheses are
+; Forth's own way of naming the run-time half of a compiling word, and both are
+; findable words like any other.
 ;
 ; The limit and the index live on the return stack, as they do in every Forth,
 ; and that stack already holds the address docol saved and anything >R parked

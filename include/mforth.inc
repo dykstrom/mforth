@@ -23,13 +23,14 @@
 %define W       rax             ; the word being entered right now
 
 ; W is live only from the jump at the end of NEXT until the code jumped to has
-; read it, and docol is the only code that reads it. Everywhere else rax is
-; free to use as a scratch register.
+; read it. The jump is one of the readers; docol is the other, and it reads W
+; to find the body one cell past the code field. Everywhere else rax is free
+; to use as a scratch register.
 
 ; 8192 cells each. Nothing checks either stack for overflow or underflow. A
 ; test on every push and pop would be more code to read than the interpreter
-; it protects, and until the interpreter reads input there is no way to ask
-; for an item that is not there.
+; it protects. DROP typed at an empty stack moves the pointer past the end of
+; the region, and nothing reports that.
 DATA_STACK_SIZE   equ 65536
 RETURN_STACK_SIZE equ 65536
 

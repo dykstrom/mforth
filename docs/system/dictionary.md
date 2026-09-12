@@ -50,6 +50,12 @@ name a programmer types at DUP; `dup` is lowercase because it is the stem of the
 macro writes, `header_dup`, `xt_dup` and `code_dup`. The rule is in
 `docs/system/inner-interpreter.md`.
 
+The name is usually in double quotes, but nasm takes either kind, and a name holding a double
+quote has to use the other: `src/strings.asm` declares `defcode '."', dot_quote` and
+`defcode '(.")', paren_dot_quote`. Those two are the only single-quoted names among 63. A
+search that looks for `defcode "` alone finds 61 words and misses both, and reports no error
+while doing it.
+
 Each macro redefines `PREVIOUS_HEADER`, a nasm `%define`, to the header it just laid down. The
 next header links back to it. This is why the order words appear in the source is the order
 they are chained in.

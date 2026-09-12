@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Deck template</title>
+
+    <!-- reveal.js and its black theme, both vendored. Nothing is fetched
+         from the network, so a deck opens in a room with no wifi. -->
+    <link rel="stylesheet" href="../vendor/reveal/reset.css">
+    <link rel="stylesheet" href="../vendor/reveal/reveal.css">
+    <link rel="stylesheet" href="../vendor/reveal/theme/black.css">
+    <link rel="stylesheet" href="../vendor/reveal/plugin/highlight/monokai.css">
+
+    <!-- Ours, loaded last so it wins over the theme. -->
+    <link rel="stylesheet" href="../theme/mforth.css">
+</head>
+
+<!-- The class picks the accent colour. deck-forth is green, deck-asm amber;
+     both are defined in ../theme/mforth.css and nowhere else. -->
+<body class="deck-forth">
+
+<div class="reveal">
+    <div class="slides">
+
+        <section>
+            <h1>Deck template</h1>
+            <p>Copy this file to start a deck.</p>
+        </section>
+
+        <section>
+            <h2>Assembly, coloured</h2>
+            <p>NEXT, from <code>include/mforth.inc</code>.</p>
+            <!-- data-line-numbers reveals the block a step at a time: the
+                 numbers before each "|" are the lines lit on that press. -->
+            <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3">
+mov     W, [IP]                 ; the execution token IP points at
+add     IP, 8                   ; step past it, ready for next time
+jmp     [W]                     ; jump through the word's code field
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>Forth, coloured</h2>
+            <p>IF, from <code>lib/prelude.f</code>.</p>
+            <pre class="wide"><code class="language-forth" data-trim>
+: IF                    ( -- hole )
+    ['] 0BRANCH ,       \ compile the jump: 0BRANCH takes it when the flag is 0
+    HERE                \ where the cell holding that jump's target goes
+    0 ,                 \ lay it down empty - nobody knows the target yet
+;                       \ and leave its address for THEN or ELSE to fill in
+IMMEDIATE
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>Speaker notes</h2>
+            <p>Press <strong>S</strong>.</p>
+            <aside class="notes">
+                This text belongs to the speaker view, not the slide. The
+                speaker view also shows the next slide and a running timer.
+            </aside>
+        </section>
+
+    </div>
+</div>
+
+<script src="../vendor/reveal/reveal.js"></script>
+<script src="../vendor/reveal/plugin/highlight.js"></script>
+<script src="../vendor/reveal/plugin/notes.js"></script>
+<script src="../theme/forth-highlight.js"></script>
+<script>
+    Reveal.initialize({
+        hash: true,
+        slideNumber: 'c/t',
+        plugins: [RevealHighlight, RevealNotes],
+        highlight: {
+            // highlight.js knows x86asm already. Forth it does not, so we
+            // hand it the grammar from ../theme/forth-highlight.js before it
+            // colours anything. The vendored plugin stays untouched.
+            beforeHighlight: hljs => hljs.registerLanguage('forth', forthLanguage),
+        },
+    });
+</script>
+
+</body>
+</html>

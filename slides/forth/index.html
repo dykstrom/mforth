@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Intro to Forth</title>
+
+    <link rel="stylesheet" href="../vendor/reveal/reset.css">
+    <link rel="stylesheet" href="../vendor/reveal/reveal.css">
+    <link rel="stylesheet" href="../vendor/reveal/theme/black.css">
+    <link rel="stylesheet" href="../vendor/reveal/plugin/highlight/monokai.css">
+    <link rel="stylesheet" href="../theme/mforth.css">
+</head>
+
+<body class="deck-forth">
+
+<div class="reveal">
+    <div class="slides">
+
+<!-- 1 -->
+<section>
+    <h1>Forth</h1>
+    <p>Everything you need to read the next talk.</p>
+    <aside class="notes">
+        Twenty minutes. We are not building anything yet. The aim is that when
+        the next talk puts Forth source on the screen, nobody is decoding it
+        for the first time. Four times in here we drop to a terminal and type
+        at a real Forth.
+    </aside>
+</section>
+
+<!-- 2 -->
+<section>
+    <h2>What Forth is</h2>
+    <ul>
+        <li class="fragment">A stack. Values go on it and come off it.</li>
+        <li class="fragment">A dictionary. A list of named things.</li>
+        <li class="fragment">Words. Each name is one, and you add your own.</li>
+    </ul>
+    <p class="fragment">That is the whole language.</p>
+    <aside class="notes">
+        Chuck Moore wrote the first Forth in the late 1960s, to point radio
+        telescopes. It went on to run boot firmware: Sun's OpenBoot and Apple's
+        Open Firmware were both Forth, and so was the FreeBSD boot loader.
+
+        The reason we can read a whole Forth aloud in one talk is this slide.
+        There is no type system, no syntax to speak of, no separate compiler.
+        Three ideas, and the rest is built out of them.
+    </aside>
+</section>
+
+<!-- 3 -->
+<section>
+    <h2>Reverse Polish</h2>
+    <p>The operator comes after its arguments.</p>
+    <table class="pairs">
+        <tr><td>infix</td><td><code>(3 + 4) * 5</code></td></tr>
+        <tr class="fragment"><td>Forth</td><td><code>3 4 + 5 *</code></td></tr>
+    </table>
+    <p class="fragment">No precedence. No parentheses. Left to right, always.</p>
+    <aside class="notes">
+        If you have used an HP calculator, you already know this. Ask the room.
+
+        Note what is missing on the Forth line: there are no brackets, and there
+        is no rule to remember about times binding tighter than plus. The order
+        you write things in is the order they happen in. That is not a
+        simplification for the slide - it is the whole parsing story.
+    </aside>
+</section>
+
+<!-- 4 -->
+<section>
+    <h2>Why it needs no brackets</h2>
+    <p>Each number pushes. Each operator pops.</p>
+    <div class="stacks">
+        <div class="stack-box">
+            <div class="stack">
+                <div class="cell">3</div>
+            </div>
+            <div class="label">3</div>
+        </div>
+        <div class="stack-box fragment">
+            <div class="stack">
+                <div class="cell">3</div>
+                <div class="cell top">4</div>
+            </div>
+            <div class="label">3 4</div>
+        </div>
+        <div class="stack-box fragment">
+            <div class="stack">
+                <div class="cell top">7</div>
+            </div>
+            <div class="label">+</div>
+        </div>
+        <div class="stack-box fragment">
+            <div class="stack">
+                <div class="cell">7</div>
+                <div class="cell top">5</div>
+            </div>
+            <div class="label">5</div>
+        </div>
+        <div class="stack-box fragment">
+            <div class="stack">
+                <div class="cell top">35</div>
+            </div>
+            <div class="label">*</div>
+        </div>
+    </div>
+    <aside class="notes">
+        Walk it one press at a time. Three goes on. Four goes on. Plus takes
+        two off and puts one back. Five goes on. Times takes two off and puts
+        one back.
+
+        The highlighted cell is the top of the stack, which is the only end
+        anything happens at.
+
+        Everything else today is this picture with more words.
+    </aside>
+</section>
+
+<!-- 5 -->
+<section>
+    <h2>Let us type it</h2>
+    <pre><code class="language-forth" data-trim>
+3 4 + .
+7  ok
+3 4 + 5 * .
+35  ok
+    </code></pre>
+    <p>The dot prints the top of the stack.</p>
+    <aside class="notes">
+        DEMO. Switch to the terminal and run:
+
+        docker exec -it -w /Workspace/mforth nasm-docker-amd64 sh -c 'make run'
+
+        It prints "mforth 0.10.0" and then about fifty " ok" lines. That is the
+        prelude being read - a file of Forth definitions fed in ahead of you.
+        Say so and move on; slide 18 comes back to it.
+
+        Type the two lines. Then type "3 4 +" on its own and point out that
+        nothing is printed - the answer is sitting on the stack, waiting. Then
+        "." to get it out.
+
+        The " ok" is the interpreter answering the line. It answers every line,
+        which is worth saying now because the audience will see a screenful of
+        them in the next talk.
+    </aside>
+</section>
+
+<!-- 6 -->
+<section>
+    <h2>The stack</h2>
+    <p>One stack of 64-bit cells. Everything travels on it.</p>
+    <div class="stacks">
+        <div class="stack-box">
+            <div class="stack">
+                <div class="cell">1</div>
+                <div class="cell fragment">2</div>
+                <div class="cell fragment top">3</div>
+            </div>
+            <div class="label">1 2 3</div>
+        </div>
+    </div>
+    <p class="fragment">Arguments come off it. Results go back on it.</p>
+    <aside class="notes">
+        Press once per cell. Typing "1 2 3" leaves three cells, three on top.
+
+        A cell is 64 bits and holds anything: a number, a character, an address.
+        Forth does not track which. That is the trade - the language gets very
+        small, and the discipline about what is on the stack is yours.
+
+        There is a second stack. We will get to it once we have something that
+        needs it.
+    </aside>
+</section>
+
+<!-- 7 -->
+<section>
+    <h2>DUP and DROP</h2>
+    <div class="stacks">
+        <div class="stack-box">
+            <div class="stack">
+                <div class="cell">1</div>
+                <div class="cell">2</div>
+                <div class="cell top">3</div>
+            </div>
+            <div class="label">before</div>
+        </div>
+        <div class="arrow">DUP &rarr;</div>
+        <div class="stack-box fragment">
+            <div class="stack">
+                <div class="cell">1</div>
+                <div class="cell">2</div>
+                <div class="cell">3</div>
+                <div class="cell top">3</div>
+            </div>
+            <div class="label">after</div>
+        </div>
+        <div class="arrow fragment">DROP &rarr;</div>
+        <div class="stack-box fragment">
+            <div class="stack">
+                <div class="cell">1</div>
+                <div class="cell">2</div>
+                <div class="cell top">3</div>
+            </div>
+            <div class="label">after</div>
+        </div>
+    </div>
+    <aside class="notes">
+        DUP copies the top item. DROP throws it away.
+
+        These two are how you cope with having no variable names. If you need a
+        value twice, you DUP it before the first use. If a word left you
+        something you do not want, you DROP it.
+    </aside>
+</section>
+
+<!-- 8 -->
+<section>
+    <h2>SWAP and OVER</h2>
+    <div class="stacks">
+        <div class="stack-box">
+            <div class="stack">
+                <div class="cell">1</div>
+                <div class="cell">2</div>
+                <div class="cell top">3</div>
+            </div>
+            <div class="label">before</div>
+        </div>
+        <div class="arrow">SWAP &rarr;</div>
+        <div class="stack-box fragment">
+            <div class="stack">
+                <div class="cell">1</div>
+                <div class="cell">3</div>
+                <div class="cell top">2</div>
+            </div>
+            <div class="label">after</div>
+        </div>
+        <div class="arrow fragment">OVER &rarr;</div>
+        <div class="stack-box fragment">
+            <div class="stack">
+                <div class="cell">1</div>
+                <div class="cell">3</div>
+                <div class="cell">2</div>
+                <div class="cell top">3</div>
+            </div>
+            <div class="label">after</div>
+        </div>
+    </div>
+    <aside class="notes">
+        SWAP exchanges the top two. OVER copies the second item to the top.
+
+        OVER is the one people stumble on. Say it as: reach over the top item
+        and copy what is underneath.
+
+        These four - DUP, DROP, SWAP, OVER - cover most of what you ever need.
+        There is a ROT as well, which brings the third item to the top.
+    </aside>
+</section>
+
+<!-- 9 -->
+<section>
+    <h2>The words in this talk</h2>
+    <table class="pairs">
+        <tr><td>stack</td><td><code>DUP DROP SWAP OVER ROT</code></td></tr>
+        <tr><td>arithmetic</td><td><code>+ - * /MOD</code></td></tr>
+        <tr><td>comparison</td><td><code>= &lt; &gt;</code></td></tr>
+        <tr><td>memory</td><td><code>@ !</code></td></tr>
+        <tr><td>printing</td><td><code>. CR EMIT ."</code></td></tr>
+        <tr><td>comments</td><td><code>\ (</code></td></tr>
+        <tr><td>looking</td><td><code>.S WORDS</code></td></tr>
+    </table>
+    <p class="fragment"><code>.S</code> prints the stack without changing it.</p>
+    <aside class="notes">
+        Not a vocabulary to memorise. It is here so that nothing in the next
+        talk is a surprise.
+
+        Two to point at. The fetch and store words, "@" and "!", are how Forth
+        reads and writes memory - an address is just a number on the stack.
+
+        The dot-quote prints the text up to the closing quote. Both comment
+        words are words too, which slide 15 comes back to.
+
+        And ".S" prints the whole stack without disturbing it. That is the one
+        we are about to use, and the one you will reach for constantly when you
+        lose track of what is on the stack.
+    </aside>
+</section>
+
+<!-- 10 -->
+<section>
+    <h2>Let us watch the stack</h2>
+    <pre><code class="language-forth" data-trim>
+1 2 3 .S
+&lt;3&gt; 1 2 3  ok
+DUP .S
+&lt;4&gt; 1 2 3 3  ok
+DROP .S
+&lt;3&gt; 1 2 3  ok
+SWAP .S
+&lt;3&gt; 1 3 2  ok
+OVER .S
+&lt;4&gt; 1 3 2 3  ok
+    </code></pre>
+    <aside class="notes">
+        DEMO. Same terminal - if it is gone, it is
+
+        docker exec -it -w /Workspace/mforth nasm-docker-amd64 sh -c 'make run'
+
+        Type these five lines.
+
+        The number in angle brackets is the depth. The items are printed bottom
+        to top, so the rightmost one is the top of the stack - the same way the
+        boxes were drawn, turned on their side.
+
+        Let the room call out what the next line will print before you press
+        return. They will get it right, which is the point of the exercise.
+    </aside>
+</section>
+
+<!-- 11 -->
+<section>
+    <h2>Words and the dictionary</h2>
+    <p>A word is a name with some code behind it.</p>
+    <p class="fragment">The dictionary is a list of them, newest first.</p>
+    <p class="fragment">Typing a name runs that word. That is all typing does.</p>
+    <aside class="notes">
+        There is no keyword list. DUP is not built into a parser - it is an
+        entry in the dictionary, exactly like a word you write yourself.
+
+        Newest first matters: if you define a word that already exists, yours
+        is found first and the old one is still there underneath.
+
+        WORDS prints the dictionary. In the next talk you will see the list
+        grow as we add to it.
+    </aside>
+</section>
+
+<!-- 12 -->
+<section>
+    <h2>What typing a line does</h2>
+    <ol>
+        <li class="fragment">Cut off the next word at a space.</li>
+        <li class="fragment">Look it up in the dictionary. Found? Run it.</li>
+        <li class="fragment">Not found? Read it as a number and push it.</li>
+        <li class="fragment">Neither? Complain.</li>
+        <li class="fragment">Line empty? Print <code>ok</code> and read another.</li>
+    </ol>
+    <aside class="notes">
+        This loop is the whole of what people call the outer interpreter, and
+        in the next talk it is about a page of assembly.
+
+        Note the order. A word wins over a number. Nothing is reserved, so
+        there is nothing stopping you defining a word called 42 - and then 42
+        means your word.
+
+        The complaint is the word back at you with a question mark: type FOO
+        and you get "FOO ?".
+
+        A space is the only separator. That is why every Forth word is written
+        with spaces around it, including the ones that look like punctuation.
+    </aside>
+</section>
+
+<!-- 13 -->
+<section>
+    <h2>Defining a word</h2>
+    <pre><code class="language-forth" data-trim>
+: SQUARE  DUP * ;
+    </code></pre>
+    <ul>
+        <li class="fragment"><code>:</code> starts a definition and takes the next word as its name.</li>
+        <li class="fragment">What follows is the body.</li>
+        <li class="fragment"><code>;</code> ends it.</li>
+    </ul>
+    <p class="fragment">Now <code>SQUARE</code> is a word like any other.</p>
+    <aside class="notes">
+        Read it aloud: colon, SQUARE, DUP, times, semicolon.
+
+        DUP makes a second copy of the argument, times multiplies the two. No
+        parameter list, no return statement - the stack is both.
+
+        And say the important part: the colon and the semicolon are themselves
+        words in the dictionary. We will come back to that.
+    </aside>
+</section>
+
+<!-- 14 -->
+<section>
+    <h2>Let us define one</h2>
+    <pre><code class="language-forth" data-trim>
+: SQUARE ( n -- n*n ) DUP * ;
+ ok
+7 SQUARE .
+49  ok
+    </code></pre>
+    <aside class="notes">
+        DEMO. Same terminal - if it is gone, it is
+
+        docker exec -it -w /Workspace/mforth nasm-docker-amd64 sh -c 'make run'
+
+        Type the definition, then use it.
+
+        Then build one on top: ": CUBE DUP SQUARE * ;" and try "3 CUBE .". A
+        word you defined is available to the next definition immediately.
+
+        Then type WORDS and show SQUARE and CUBE at the front of the list.
+
+        The thing in brackets is a comment. Next slide.
+    </aside>
+</section>
+
+<!-- 15 -->
+<section>
+    <h2>Stack-effect comments</h2>
+    <pre><code class="language-forth" data-trim>
+: SQUARE  ( n -- n*n )      DUP * ;
+: CUBE    ( n -- n*n*n )    DUP SQUARE * ;
+: NIP     ( n1 n2 -- n2 )   SWAP DROP ;
+    </code></pre>
+    <p class="fragment">Before the <code>--</code>, what it takes. After, what it leaves.</p>
+    <p class="fragment">Not syntax: <code>(</code> is a word that skips to the
+       <code>)</code>, and <code>\</code> is a word that skips the rest of the line.</p>
+    <aside class="notes">
+        This is the closest thing Forth has to a type signature, and it is
+        entirely a convention - a comment. Every word in the repo we are about
+        to read carries one, and they are how you follow the code without
+        running it.
+
+        Read the NIP one out: takes two items, leaves the second. Which is what
+        SWAP DROP does.
+
+        CUBE is the one to linger on: it is a word built out of a word you
+        wrote a slide ago. DUP leaves two copies, SQUARE turns the top one into
+        n squared, and the multiply finishes it. The next slide needs a word
+        that calls a word, and this is it.
+
+        The second point is the one to land. The open bracket is a word in the
+        dictionary. It runs, and what it does is move the input position past
+        the closing bracket. Forth has no syntax for comments because Forth has
+        almost no syntax.
+    </aside>
+</section>
+
+<!-- 16 -->
+<section>
+    <h2>Two stacks</h2>
+    <div class="stacks">
+        <div class="stack-box">
+            <div class="stack">
+                <div class="cell">1</div>
+                <div class="cell">3</div>
+                <div class="cell top">2</div>
+            </div>
+            <div class="label">data stack: values</div>
+        </div>
+        <div class="stack-box">
+            <div class="stack">
+                <div class="cell">in CUBE</div>
+                <div class="cell top">in SQUARE</div>
+            </div>
+            <div class="label">return stack: where to come back to</div>
+        </div>
+    </div>
+    <aside class="notes">
+        Now that a word can call a word, the second stack has a job.
+
+        When CUBE calls SQUARE, something has to remember where in CUBE to
+        carry on. That is the return stack. Every other language has this too -
+        it is the call stack - the difference is that in Forth it is a separate
+        stack from the one your values are on.
+
+        And that is exactly why it is separate. If arguments and return
+        addresses shared a stack, a word could not leave its results just
+        sitting there for the caller to pick up.
+    </aside>
+</section>
+
+<!-- 17 -->
+<section>
+    <h2>You can use it too</h2>
+    <table class="pairs">
+        <tr><td><code>&gt;R</code></td><td>move the top item to the return stack</td></tr>
+        <tr><td><code>R&gt;</code></td><td>move it back</td></tr>
+        <tr><td><code>R@</code></td><td>copy it back, leaving it there</td></tr>
+    </table>
+    <p class="fragment">What you take, you put back before the word ends.</p>
+    <aside class="notes">
+        Useful when you need to get something out of the way: park it on the
+        return stack, work on what is underneath, bring it back.
+
+        The rule on the slide is not advice. The return stack is holding the
+        address the word returns to. Leave something extra on it and the word
+        returns to your number instead. Nothing checks, and the crash is not
+        near the mistake.
+
+        In the next talk you will see these three words implemented, and they
+        are three instructions each.
+    </aside>
+</section>
+
+<!-- 18 -->
+<section>
+    <h2>Most of Forth is written in Forth</h2>
+    <pre class="wide"><code class="language-forth" data-trim data-line-numbers="1|2|3|4">
+: NIP     ( n1 n2 -- n2 )       SWAP DROP ;          \ drop the one underneath
+: TUCK    ( n1 n2 -- n2 n1 n2 ) SWAP OVER ;          \ a copy of n2 below n1
+: NEGATE  ( n -- -n )           0 SWAP - ;           \ 0 - n is -n
+: ABS     ( n -- |n| )          DUP 0&lt; IF NEGATE THEN ;
+    </code></pre>
+    <p class="fragment">Straight out of <code>lib/prelude.f</code>. Nothing special about them.</p>
+    <aside class="notes">
+        These are four real lines from the Forth we are about to read, copied
+        without changes.
+
+        Point at ABS: it calls NEGATE, which is defined two lines above it. The
+        file is ordered so that every word uses only words already defined.
+
+        This is the claim Forth makes about itself. You write a small core in
+        assembly - in our case about thirty words - and everything else is
+        ordinary definitions typed in the same language a user types.
+    </aside>
+</section>
+
+<!-- 19 -->
+<section>
+    <h2>The whole of the rest</h2>
+    <table class="words">
+        <tr><td>0=</td><td>0 =</td>          <td>NIP</td>    <td>SWAP DROP</td></tr>
+        <tr><td>0&lt;</td><td>0 &lt;</td>    <td>TUCK</td>   <td>SWAP OVER</td></tr>
+        <tr><td>1+</td><td>1 +</td>          <td>?DUP</td>   <td>DUP IF DUP THEN</td></tr>
+        <tr><td>1-</td><td>1 -</td>          <td>NEGATE</td> <td>0 SWAP -</td></tr>
+        <tr><td>2*</td><td>2 *</td>          <td>ABS</td>    <td>DUP 0&lt; IF NEGATE THEN</td></tr>
+        <tr><td>/</td><td>/MOD NIP</td>      <td>MOD</td>    <td>/MOD DROP</td></tr>
+    </table>
+    <p class="fragment">Thirteen words. Every body is one line.</p>
+    <aside class="notes">
+        The point of showing all of them at once is the shape, not the detail.
+
+        Look at the right-hand column: every one is a line of words that
+        already exist. None of them needed a new feature in the language.
+
+        And notice what is not in the assembly core because of this. We
+        implement /MOD, which leaves both answers, and then "/" and MOD are one
+        line each on top of it.
+    </aside>
+</section>
+
+<!-- 20 -->
+<section>
+    <h2>Two modes</h2>
+    <table class="pairs">
+        <tr><td>interpreting</td><td>run each word as it is read</td></tr>
+        <tr><td>compiling</td><td>write each word into the definition instead</td></tr>
+    </table>
+    <p class="fragment"><code>:</code> switches to compiling. <code>;</code> switches back.</p>
+    <p class="fragment">It is one cell in memory holding 0 or -1.</p>
+    <aside class="notes">
+        Until now every word ran the moment it was read. Inside a colon
+        definition that cannot happen - typing ": SQUARE DUP * ;" must not
+        duplicate anything yet.
+
+        So the interpreter has a mode, and the mode is a single cell called
+        state. Colon sets it, semicolon clears it. That is the entire
+        compiler's worth of bookkeeping.
+
+        This also explains why a definition can span several lines: the cell
+        outlives the line.
+    </aside>
+</section>
+
+<!-- 21 -->
+<section>
+    <h2>Except for immediate words</h2>
+    <p>A word can be marked to run <em>while</em> the compiler is compiling.</p>
+    <p class="fragment">The compiler checks that mark on every word it reads.</p>
+    <p class="fragment"><code>IF</code>, <code>ELSE</code>, <code>THEN</code>, <code>;</code> and <code>(</code> are all marked.</p>
+    <aside class="notes">
+        One exception to the mode, and it is what makes the rest possible.
+
+        Semicolon has to be immediate - if it were compiled like everything
+        else, a definition could never end.
+
+        And once you have that mechanism, control flow falls out of it for
+        free. That is the next slide.
+    </aside>
+</section>
+
+<!-- 22 -->
+<section>
+    <h2>Conditions and loops</h2>
+    <pre class="wide"><code class="language-forth" data-trim>
+: ABS      ( n -- |n| )  DUP 0&lt; IF NEGATE THEN ;
+: SIGN     ( n -- )      0&lt; IF ." negative" ELSE ." not negative" THEN ;
+    </code></pre>
+    <pre class="wide fragment"><code class="language-forth" data-trim>
+: COUNTDOWN ( n -- )  BEGIN DUP . 1- DUP 0= UNTIL DROP CR ;
+: STARS     ( n -- )  0 DO 42 EMIT LOOP CR ;
+    </code></pre>
+    <aside class="notes">
+        IF takes a flag off the stack. Not-zero runs the part up to ELSE,
+        zero runs the part after it.
+
+        Worth pointing at the difference between the two lines: 0< eats the
+        number it tests. ABS still wants that number afterwards, so it DUPs it
+        first. SIGN only prints, so it does not, and it leaves the stack as it
+        found it. THEN is not "then" in the English sense -
+        it means "at this point", the place both paths meet. Everyone reads it
+        wrong once.
+
+        Forth's false is 0 and its true is -1, every bit set, which is why the
+        same AND and OR serve for bits and for logic.
+
+        The loops go on the second half of the slide and we are not dwelling on
+        them. BEGIN UNTIL tests at the bottom; DO LOOP counts, and I is the
+        counter. Both definitions run: "5 COUNTDOWN" prints 5 4 3 2 1 and
+        "7 STARS" prints seven asterisks.
+    </aside>
+</section>
+
+<!-- 23 -->
+<section>
+    <h2>IF is not syntax</h2>
+    <pre class="wide"><code class="language-forth" data-trim data-line-numbers="1|2|3|4|5|6">
+: IF                    ( -- hole )
+    ['] 0BRANCH ,       \ compile the jump: 0BRANCH takes it when the flag is 0
+    HERE                \ where the cell holding that jump's target goes
+    0 ,                 \ lay it down empty - nobody knows the target yet
+;                       \ and leave its address for THEN or ELSE to fill in
+IMMEDIATE
+    </code></pre>
+    <table class="pairs">
+        <tr><td>[']</td><td>the execution token of the word named after it</td></tr>
+        <tr><td>,</td><td>lay one cell down at HERE</td></tr>
+        <tr><td>HERE</td><td>the address the next cell will go to</td></tr>
+    </table>
+    <p class="fragment">A word, in the dictionary, written in Forth.</p>
+    <aside class="notes">
+        This is the slide the whole deck exists for. Copied unchanged from
+        lib/prelude.f.
+
+        Walk the lines. IF is an immediate word, so when the compiler meets it
+        inside a definition it runs it. What it does is write a conditional
+        jump into the word being defined, then write an empty cell after it,
+        because at this moment nobody knows where the jump goes. It leaves the
+        address of that empty cell on the stack.
+
+        THEN, later in the line, is another immediate word. It takes that
+        address and fills in where we have got to.
+
+        So a conditional is compiled by two ordinary words passing an address
+        between them on the data stack. Nothing in the parser knows what IF
+        means. If you do not like it, you can write your own.
+    </aside>
+</section>
+
+<!-- 24 -->
+<section>
+    <h2>Let us use it</h2>
+    <pre class="wide"><code class="language-forth" data-trim>
+: SIGN ( n -- ) 0&lt; IF ." negative" ELSE ." not negative" THEN CR ;
+ ok
+-5 SIGN
+negative
+ ok
+7 SIGN
+not negative
+ ok
+    </code></pre>
+    <aside class="notes">
+        DEMO. The last one. Same terminal - if it is gone, it is
+
+        docker exec -it -w /Workspace/mforth nasm-docker-amd64 sh -c 'make run'
+
+        Type the definition and both calls.
+
+        Then, if there is time, the thing worth showing: type
+
+        : TWICE  ['] DUP , ['] + , ; IMMEDIATE
+        : DOUBLE 21 TWICE ;
+        DOUBLE .
+
+        TWICE is a word you wrote that writes code into the next definition,
+        and DOUBLE prints 42. That is a macro, in five words, with nothing the
+        language had to add.
+    </aside>
+</section>
+
+<!-- 25 -->
+<section>
+    <h2>What you now know</h2>
+    <ul>
+        <li>Arguments on a stack, operator last.</li>
+        <li>A word is a name in a dictionary.</li>
+        <li><code>:</code> and <code>;</code> define one.</li>
+        <li>A second stack holds where to come back to.</li>
+        <li>Control flow is words, not syntax.</li>
+    </ul>
+    <aside class="notes">
+        Five things. If the room has these, the next talk works.
+
+        Nothing here was about how any of it is implemented, which is
+        deliberate - that is the whole of the next talk, and it is about two
+        thousand lines of assembly.
+    </aside>
+</section>
+
+<!-- 26 -->
+<section>
+    <h2>Next</h2>
+    <p>We build this. In assembly.</p>
+    <p class="fragment">First, enough x86-64 to read it.</p>
+    <aside class="notes">
+        Hand over to the assembly deck.
+
+        If the room is with you, say what the target is: a working Forth in
+        about two thousand lines, where every line can be read aloud and
+        explained.
+    </aside>
+</section>
+
+    </div>
+</div>
+
+<script src="../vendor/reveal/reveal.js"></script>
+<script src="../vendor/reveal/plugin/highlight.js"></script>
+<script src="../vendor/reveal/plugin/notes.js"></script>
+<script src="../theme/forth-highlight.js"></script>
+<script>
+    Reveal.initialize({
+        hash: true,
+        slideNumber: 'c/t',
+        plugins: [RevealHighlight, RevealNotes],
+        highlight: {
+            beforeHighlight: hljs => hljs.registerLanguage('forth', forthLanguage),
+        },
+    });
+</script>
+
+</body>
+</html>

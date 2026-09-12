@@ -1,0 +1,194 @@
+/* Shared style for the mforth intro decks.
+ *
+ * Load this after the vendored reveal.js theme. It changes three things and
+ * leaves the rest of the theme alone:
+ *
+ *   1. one accent colour per deck, picked by a class on <body>
+ *   2. code blocks large enough to read from the back of the room
+ *   3. a monospace stack that does not need a downloaded font
+ *
+ * Every deck loads this same file. Nothing here is copied into a deck.
+ */
+
+/* The accent. A deck sets its colour by putting one of these classes on
+ * <body>; the value is inherited by everything reveal.js draws inside it.
+ * The colours are period-correct: a green screen for Forth, an amber
+ * monitor for the assembly. Both are light on the black background. */
+:root { --green: #7ee787; --amber: #ffb000; }
+
+body              { --accent: var(--green); }  /* if a deck says nothing */
+body.deck-forth   { --accent: var(--green); }  /* green screen */
+body.deck-asm     { --accent: var(--amber); }  /* amber monitor */
+
+/* reveal.js reads its own variables for these. Declaring them on <body>, not
+ * on :root, is what makes var(--accent) resolve to the deck's colour: the
+ * class that sets --accent is on <body> too. */
+body {
+    --r-heading-color: var(--accent);
+    --r-link-color: var(--accent);
+    --r-link-color-hover: var(--accent);
+    --r-code-font: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* The three chrome elements that carry a colour of their own. Each draws
+ * itself with currentColor, so setting the colour is enough. */
+.reveal .progress     { color: var(--accent); }
+.reveal .controls     { color: var(--accent); }
+.reveal .slide-number { color: var(--accent); }
+
+/* Code is the point of both decks, so it gets more room than reveal.js
+ * gives it by default, and an accent stripe down the side. */
+.reveal pre {
+    box-shadow: none;
+    width: 100%;
+    margin: 20px 0;
+}
+
+/* The size is a line-width budget, not a taste. A slide is 960 units wide and
+ * the monospace glyph is about 0.6 of the font size, so at 1.15em a line of
+ * 56 characters reaches the right edge and the 57th is cut off with no
+ * warning of any kind. Most blocks are shorter than that. */
+.reveal pre code {
+    border-left: 4px solid var(--accent);
+    border-radius: 2px;
+    padding: 16px 20px;
+    max-height: 560px;
+    font-size: 1.15em;
+    line-height: 1.35;
+}
+
+/* Put class="wide" on the <pre> when a line runs past 56 characters, which a
+ * line copied out of src/ or lib/prelude.f usually does. This fits 89, and
+ * the rule in slides/README.md says 85 so that a block lands with a few
+ * characters to spare rather than at the edge. */
+.reveal pre.wide code {
+    font-size: 0.72em;
+}
+
+/* A stack, drawn as boxed cells.
+ *
+ * The cells are written bottom-first in the markup, because that is the order
+ * a stack fills in and the order the fragments should appear in. The column is
+ * reversed here so the last one written lands on top, where the top of the
+ * stack belongs. Put .fragment on every cell after the first and each press
+ * pushes one more. */
+.reveal .stacks {
+    display: flex;
+    gap: 1.5em;
+    justify-content: center;
+    align-items: flex-end;
+    margin-top: 0.5em;
+}
+
+.reveal .stacks .arrow {
+    color: var(--accent);
+    align-self: center;
+    font-size: 1.6em;
+}
+
+.reveal .stack-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.reveal .stack {
+    display: flex;
+    flex-direction: column-reverse;
+    font-family: var(--r-code-font);
+}
+
+.reveal .stack .cell {
+    border: 2px solid var(--accent);
+    border-radius: 2px;
+    min-width: 2.6em;
+    padding: 0.12em 0.5em;
+    margin: 2px 0;
+    text-align: center;
+    line-height: 1.3;
+}
+
+/* The label sits under the stack and names what is being drawn. */
+.reveal .stack-box .label {
+    color: #999;
+    font-size: 0.6em;
+    margin-top: 0.5em;
+    letter-spacing: 0.05em;
+}
+
+/* The top of the stack is the end everything happens at, so it is worth
+ * marking. Put .top on the last cell written. */
+.reveal .stack .cell.top {
+    background: var(--accent);
+    color: #191919;
+}
+
+/* A table of word against what defines it. Two pairs of columns, so thirteen
+ * words fit on one slide without the table growing taller than the slide and
+ * pushing whatever follows it off the bottom - reveal.js does not shrink a
+ * slide that overflows, it just lets it run off.
+ *
+ * The odd columns hold the word and take the accent; the even ones hold the
+ * body and stay grey. That is the whole reason for the colour: from six rows
+ * back, the eye needs to know which half is the name. */
+.reveal table.words {
+    font-size: 0.55em;
+    margin: 0.5em auto 0;
+    border-collapse: collapse;
+}
+
+.reveal table.words td {
+    border: none;
+    padding: 0.3em 0.8em;
+    font-family: var(--r-code-font);
+    white-space: nowrap;
+}
+
+.reveal table.words td:nth-child(odd) {
+    color: var(--accent);
+    text-align: right;
+}
+
+.reveal table.words td:nth-child(even) {
+    color: #bbb;
+    text-align: left;
+}
+
+/* The gap between the two pairs, so they read as two lists and not four
+ * columns. */
+.reveal table.words td:nth-child(3) {
+    padding-left: 2.5em;
+}
+
+/* The other tables in the decks: a term on the left and what it is on the
+ * right. Same colour rule as .words and the same reason - and the same size
+ * reduction, because six rows at the slide's own font size run off the
+ * bottom. */
+.reveal table.pairs {
+    font-size: 0.75em;
+    margin: 0.5em auto 0;
+    border-collapse: collapse;
+}
+
+.reveal table.pairs td {
+    border: none;
+    padding: 0.3em 0.9em;
+    vertical-align: baseline;
+}
+
+.reveal table.pairs td:first-child {
+    color: var(--accent);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.reveal table.pairs td + td {
+    color: #bbb;
+    text-align: left;
+}
+
+/* Headings sit closer to what follows them than the theme allows. */
+.reveal h1, .reveal h2, .reveal h3 {
+    text-transform: none;
+    letter-spacing: -0.01em;
+}

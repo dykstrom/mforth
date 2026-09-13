@@ -6,6 +6,13 @@ build/
 *.map
 *.bin
 
+# The linked examples in slides/examples. They have no extension, so *.o
+# above does not cover them, and they do not land in build/.
+slides/examples/exit-syscall
+slides/examples/hello-syscall
+slides/examples/hello-libc
+slides/examples/rmw-x86
+
 # Local agent tooling state
 .claude/
 

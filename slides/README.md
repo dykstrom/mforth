@@ -43,6 +43,7 @@ the deck on the projector.
 | `template/index.html` | A four-slide skeleton to copy when starting a deck |
 | `theme/mforth.css` | The style both decks load. The only place the accent colours live |
 | `theme/forth-highlight.js` | A highlight.js grammar for Forth, which highlight.js does not ship |
+| `examples/` | The assembly sources the x86-64 deck quotes, with a Makefile that builds and runs them. See `examples/README.md` |
 | `vendor/reveal/` | reveal.js, committed. See `vendor/README.md` |
 
 ## Writing a deck
@@ -64,4 +65,6 @@ you are looking at.
 
 Put what you plan to say in `<aside class="notes">` inside the slide.
 
-Nothing in `slides/` is built. `make` and `make test` do not look here.
+Nothing in `slides/` is built by the top-level `Makefile`: `make` and
+`make test` do not look here. `examples/` has a Makefile of its own, run
+by hand when an example changes.

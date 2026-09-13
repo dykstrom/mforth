@@ -23,10 +23,17 @@
     <h1>x86-64</h1>
     <p>Enough of it to read the next talk.</p>
     <aside class="notes">
-        Twenty minutes. Every instruction in here is one mforth actually
-        writes, and nothing else is in here. That is the promise: no floating
-        point, no vector instructions, nothing you will not see again this
-        afternoon.
+        Twenty minutes, and this deck is the one at risk: its notes run to
+        about twenty-one at an unhurried pace before the demo on slide 19.
+        Slide 23 is already marked optional and is the heaviest at about
+        ninety seconds, so drop it first. Then take slides 3 and 6 faster
+        rather than cutting them. Do not cut 13, 17 or 22: the callee-saved
+        split, the two hello worlds and Forth's + are what the afternoon
+        leans on.
+
+        Every instruction in here is one mforth actually writes, and nothing
+        else is in here. That is the promise: no floating point, no vector
+        instructions, nothing you will not see again this afternoon.
 
         If half the room has written assembly before, say so out loud and go
         faster through the first six slides.
@@ -163,7 +170,10 @@ mov     qword [x], 0    ; size, when nothing implies it
         two, four, eight.
 
         Word means 16 bits here, forever, because it meant 16 bits on the
-        8086.
+        8086. Say that out loud, because the last twenty minutes taught the
+        room that a word is a Forth definition. For the rest of today a word
+        is whichever of the two the surrounding sentence is about, and this
+        is the only slide where it means 16 bits.
     </aside>
 </section>
 

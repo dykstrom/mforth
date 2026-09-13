@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Intro to x86-64 assembly</title>
+
+    <link rel="stylesheet" href="../vendor/reveal/reset.css">
+    <link rel="stylesheet" href="../vendor/reveal/reveal.css">
+    <link rel="stylesheet" href="../vendor/reveal/theme/black.css">
+    <link rel="stylesheet" href="../vendor/reveal/plugin/highlight/monokai.css">
+    <link rel="stylesheet" href="../theme/mforth.css">
+</head>
+
+<body class="deck-asm">
+
+<div class="reveal">
+    <div class="slides">
+
+<!-- 1 -->
+<section>
+    <h1>x86-64</h1>
+    <p>Enough of it to read the next talk.</p>
+    <aside class="notes">
+        Twenty minutes. Every instruction in here is one mforth actually
+        writes, and nothing else is in here. That is the promise: no floating
+        point, no vector instructions, nothing you will not see again this
+        afternoon.
+
+        If half the room has written assembly before, say so out loud and go
+        faster through the first six slides.
+    </aside>
+</section>
+
+<!-- 2 -->
+<section>
+    <h2>What the machine does</h2>
+    <ul>
+        <li class="fragment">Read the instruction at the address in <code>rip</code>.</li>
+        <li class="fragment">Do it.</li>
+        <li class="fragment">Add its length to <code>rip</code>, and go again.</li>
+    </ul>
+    <p class="fragment">That loop is the whole computer.</p>
+    <aside class="notes">
+        Fetch, execute, step. A few billion times a second, and it has never
+        done anything else.
+
+        rip is the instruction pointer. It is the only register you cannot
+        name in an instruction: nothing writes rip directly. A jump writes it,
+        a call writes it, and returning writes it back. That is the list.
+
+        Say the word memory here: one flat array of bytes, addressed from 0 up.
+        There are no types in it. A byte is a byte, and what it means is
+        decided by the instruction that reads it.
+    </aside>
+</section>
+
+<!-- 3 -->
+<section>
+    <h2>Sixteen registers</h2>
+    <table class="words">
+        <tr><td>rax</td><td>accumulator, and the return value</td><td>r8</td><td>argument 5</td></tr>
+        <tr><td>rbx</td><td>nothing, today</td><td>r9</td><td>argument 6</td></tr>
+        <tr><td>rcx</td><td>counts and shift amounts</td><td>r10</td><td>no history at all</td></tr>
+        <tr><td>rdx</td><td>the other half of a multiply</td><td>r11</td><td>no history at all</td></tr>
+        <tr><td>rsi</td><td>source, for the copy instructions</td><td>r12</td><td>no history at all</td></tr>
+        <tr><td>rdi</td><td>destination, for those same ones</td><td>r13</td><td>no history at all</td></tr>
+        <tr><td>rbp</td><td>frame pointer, by habit only</td><td>r14</td><td>no history at all</td></tr>
+        <tr><td>rsp</td><td>the machine stack pointer</td><td>r15</td><td>no history at all</td></tr>
+    </table>
+    <p class="fragment">Only <code>rsp</code> has a job the hardware insists on.</p>
+    <aside class="notes">
+        Sixteen places to hold a 64-bit value, and reaching one costs nothing.
+        Reaching memory costs a lot more. That is the whole reason registers
+        exist, and the reason a Forth written in assembly cares where it keeps
+        its stack pointers.
+
+        The left column is old. Every name there is a duty some CPU had in the
+        1970s and that we are still living with. rbx is the honest one: it was
+        the base register for 16-bit addressing, that job is gone, and it is
+        now a plain register.
+
+        The right column is new, added with 64-bit mode in 2003, which is why
+        nothing on that side has a story.
+
+        Only rsp is real. push, pop, call and ret all read and write it, and
+        the kernel writes a signal frame through it. You cannot opt out of it.
+        rbp is convention: nothing in the hardware cares, but a debugger
+        walking a backtrace does.
+
+        mforth keeps its whole machine in registers: rbx is the Forth
+        instruction pointer, r12 the data stack pointer, r13 the return stack
+        pointer.
+    </aside>
+</section>
+
+<!-- 4 -->
+<section>
+    <h2>Why one register has four names</h2>
+    <table class="pairs">
+        <tr><td>1978</td><td>8086, 16 bits: <code>ax</code>, and <code>ah</code>/<code>al</code> as its two halves</td></tr>
+        <tr class="fragment"><td>1985</td><td>80386, 32 bits: <code>eax</code>, the E for extended</td></tr>
+        <tr class="fragment"><td>2003</td><td>AMD64, 64 bits: <code>rax</code>, and <code>r8</code> to <code>r15</code> as well</td></tr>
+    </table>
+    <p class="fragment">
+        <code>rax</code>, <code>eax</code>, <code>ax</code> and <code>al</code>
+        are one register. They name 64, 32, 16 and 8 bits of it.
+    </p>
+    <aside class="notes">
+        Each generation kept the one before it running, so each name is still
+        there. Nothing is copied or converted: write al and you have changed
+        the bottom byte of rax, and reading rax afterwards shows it.
+
+        The accumulator of a 1972 calculator chip, the 8008, is still bits 0
+        to 7 of rax on the machine in front of you.
+
+        You will see all four widths in mforth this afternoon, and they always
+        mean the same register.
+    </aside>
+</section>
+
+<!-- 5 -->
+<section>
+    <h2>The rule that bites</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3">
+mov     rax, -1         ; rax = 0xFFFFFFFFFFFFFFFF
+mov     eax, 10         ; rax = 0x000000000000000A  - top half zeroed
+mov     al, 10          ; rax = 0xFFFFFFFFFFFFFF0A  - top 56 bits kept
+    </code></pre>
+    <p class="fragment">Writing a 32-bit name clears the upper 32 bits. The smaller names do not.</p>
+    <aside class="notes">
+        This is the one surprise in the naming, and it is not a quirk to work
+        around. It is a tool.
+
+        mov eax, 10 and mov rax, 10 leave the same value in rax, and the
+        32-bit form is two bytes shorter, so that is what you write when the
+        value fits. You will see "xor eax, eax" all afternoon where the
+        intention is to clear the whole of rax, and now you know why that is
+        enough.
+    </aside>
+</section>
+
+<!-- 6 -->
+<section>
+    <h2>Reading a line</h2>
+    <pre><code class="language-x86asm" data-trim data-line-numbers="1|2|3">
+mov     rax, rbx        ; destination, then source
+add     rax, 8          ; rax = rax + 8
+mov     qword [x], 0    ; size, when nothing implies it
+    </code></pre>
+    <p class="fragment">One instruction, one line. The comment is half of it.</p>
+    <aside class="notes">
+        Destination on the left. This is Intel syntax, which is what NASM
+        speaks and what this repo is written in. If you have read AT&amp;T
+        syntax before, with the percent signs and the operands the other way
+        round, forget it for today.
+
+        An instruction carries its size in the operands. Two registers, and
+        the register names say it. A register and a number, same. But
+        "mov [x], 0" says nothing about how many bytes to write, so NASM makes
+        you say qword, which is eight of them. byte, word, dword, qword: one,
+        two, four, eight.
+
+        Word means 16 bits here, forever, because it meant 16 bits on the
+        8086.
+    </aside>
+</section>
+
+<!-- 7 -->
+<section>
+    <h2>Square brackets mean memory</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3|4">
+mov     rax, rbx        ; the value in rbx
+mov     rax, [rbx]      ; the eight bytes rbx points at
+mov     rax, [rbx + 8]  ; the cell one past that
+lea     rax, [rbx + 8]  ; that address, without reading it
+    </code></pre>
+    <table class="pairs">
+        <tr><td>mov</td><td>move a value</td></tr>
+        <tr><td>lea</td><td>work out an address and keep the address</td></tr>
+    </table>
+    <aside class="notes">
+        Brackets are the only way to reach memory, and they read as "the
+        contents of". This is the most useful slide in the deck: half of
+        reading assembly is knowing whether a line touches memory or not.
+
+        lea is the odd one. It uses the same bracket syntax but never reads
+        anything - it does the arithmetic inside the brackets and hands back
+        the answer. It is the address calculator, borrowed as a general adder.
+
+        mforth's DUP is three of these lines: read the top of the stack, move
+        the pointer down, write the value back.
+    </aside>
+</section>
+
+<!-- 8 -->
+<section>
+    <h2>Arithmetic</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3|4-5">
+add     rax, rbx        ; rax = rax + rbx
+sub     rax, rbx        ; rax = rax - rbx
+imul    rax, rbx        ; rax = rax * rbx, signed
+cqo                     ; sign-extend rax through rdx:rax
+idiv    rbx             ; quotient in rax, remainder in rdx
+    </code></pre>
+    <p class="fragment">Two operands, and the left one is also the answer.</p>
+    <aside class="notes">
+        The first three read the same way: do it, and put the answer back in
+        the left operand. The left operand is destroyed. If you want to keep
+        it, copy it first.
+
+        Division is the awkward one, and it is awkward for a reason from 1978.
+        idiv takes one operand, the divisor, and it divides a 128-bit value
+        held across rdx and rax by it. So rdx has to be set up first, and cqo
+        is the instruction that does it: it copies the sign bit of rax through
+        the whole of rdx. Forget cqo and a negative number divides into
+        nonsense.
+
+        mforth's division word is /MOD, and it is these two lines with a
+        load either side of them and two stores after.
+    </aside>
+</section>
+
+<!-- 9 -->
+<section>
+    <h2>Bits</h2>
+    <pre><code class="language-x86asm" data-trim data-line-numbers="1|2|3|4">
+and     rax, rbx        ; bits set in both
+or      rax, rbx        ; bits set in either
+xor     rax, rbx        ; bits set in one, not both
+xor     eax, eax        ; therefore: rax = 0
+    </code></pre>
+    <p class="fragment">No bit differs from itself.</p>
+    <aside class="notes">
+        The first three are the ordinary ones and need no explanation beyond
+        the line.
+
+        The fourth is an idiom you have to be able to read, because it is
+        everywhere and it looks like a trick. Anything exclusive-ORed with
+        itself is zero. It is shorter than "mov eax, 0", and the CPU has
+        recognised it as "clear this register" for thirty years.
+
+        Read it as: rax is now zero. Not as: something clever happened.
+    </aside>
+</section>
+
+<!-- 10 -->
+<section>
+    <h2>Flags</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2">
+cmp     rax, rbx        ; subtract, and keep only the flags
+test    rax, rax        ; AND it with itself: zero flag set if zero
+    </code></pre>
+    <p class="fragment">Neither one writes a register. They leave a verdict behind.</p>
+    <aside class="notes">
+        There is a register nobody names: rflags. Almost every arithmetic
+        instruction writes it as a side effect - was the answer zero, was it
+        negative, did it carry.
+
+        cmp and test exist to write those flags and nothing else. cmp does a
+        subtraction and throws the difference away. test does an AND and
+        throws that away. What survives is the verdict, and the next
+        instruction reads it.
+
+        test rax, rax is the second idiom of the day, and it means "is rax
+        zero". ANDing a value with itself gives the value back, so the only
+        thing it really settles is whether every bit was zero.
+    </aside>
+</section>
+
+<!-- 11 -->
+<section>
+    <h2>Jumps</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2-3|4">
+jmp     done            ; always
+jz      done            ; if the last result was zero
+jnz     done            ; if it was not
+jl      done            ; if less than, signed
+    </code></pre>
+    <p class="fragment">A label is just a name for an address.</p>
+    <aside class="notes">
+        A jump writes rip. That is all a jump is.
+
+        The conditional ones read the flags that cmp or test left. Notice the
+        split: one instruction decides, a second one jumps. They are always
+        written as a pair, and they do not have to be next to each other -
+        anything in between that writes the flags will break it.
+
+        jz and je are the same instruction with two names, because "the result
+        was zero" and "the two were equal" are the same question after a cmp.
+        Use whichever reads better at the line.
+
+        jl is signed, and there is a separate jb for unsigned. Getting that
+        wrong is a real bug, not a style choice.
+    </aside>
+</section>
+
+<!-- 12 -->
+<section>
+    <h2>The machine stack</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1-2|3-4">
+push    rax             ; rsp -= 8, then write rax there
+pop     rax             ; read it back, then rsp += 8
+call    puts            ; push the return address, then jump
+ret                     ; pop it into rip
+    </code></pre>
+    <p class="fragment">It grows downwards, and <code>call</code> uses it.</p>
+    <aside class="notes">
+        Four instructions, and they are two pairs. push and pop move rsp and
+        touch memory. call and ret are push and pop with the return address as
+        the value.
+
+        Downwards is the thing to say out loud. Pushing makes rsp smaller. It
+        is an accident of 1970s memory layout that everybody still lives with.
+
+        This is also where the room should hear the word return: call
+        remembers where to come back to by writing it in memory. This
+        afternoon, Forth does the same thing in its own second stack, for its
+        own words, and that is the only reason a Forth needs two stacks.
+    </aside>
+</section>
+
+<!-- 13 -->
+<section>
+    <h2>Who has to save what</h2>
+    <table class="pairs">
+        <tr><td>caller-saved</td><td><code>rax rdi rsi rdx rcx r8 r9 r10 r11</code></td></tr>
+        <tr><td>callee-saved</td><td><code>rbx rbp rsp r12 r13 r14 r15</code></td></tr>
+    </table>
+    <p class="fragment">Arguments go in <code>rdi</code>, <code>rsi</code>, <code>rdx</code>, <code>rcx</code>, <code>r8</code>, <code>r9</code>. The answer comes back in <code>rax</code>.</p>
+    <aside class="notes">
+        This is the System V ABI, the agreement every C function on Linux
+        keeps. It is not a hardware rule. It is a promise, and libc keeps it.
+
+        Top row: a function you call may destroy these. Want the value after
+        the call, save it yourself.
+
+        Bottom row: a function you call must hand these back untouched.
+
+        Now the payoff, and it is the reason this slide is in the deck.
+        mforth's Forth machine lives in rbx, r12 and r13 - three callee-saved
+        registers. So a Forth word that calls printf is the call and nothing
+        else: no saving, no restoring. Had they been in the top row, every
+        word that talks to libc would have to save and restore all three.
+
+        One more rule, and it bites silently: rsp must be a multiple of 16 at
+        the moment you execute a call. Get it wrong and printf can work for a
+        long time and then crash for no visible reason.
+    </aside>
+</section>
+
+<!-- 14 -->
+<section>
+    <h2>What NASM adds</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1-2|4-6|8">
+        section .text           ; code
+        section .rodata         ; constants
+
+msg:    db      "hello", 0      ; bytes
+count:  dq      0               ; one 64-bit cell
+SIZE    equ     65536           ; a name for a number, no memory
+
+%include "src/words.asm"        ; paste that file in here
+    </code></pre>
+    <p class="fragment">Directions to the assembler. Not instructions to the CPU.</p>
+    <aside class="notes">
+        Sections say what kind of thing follows, and the linker keeps each
+        kind together. .text is code, .rodata is constants, .data is variables
+        the program writes.
+
+        db and dq lay bytes down where they stand: one byte at a time, or
+        eight. A label in front is a name for that address.
+
+        equ is different and worth a sentence. It reserves nothing. It is a
+        name for a number, resolved while the file is being assembled.
+
+        %include is textual. nasm is run on src/mforth.asm alone, and every
+        other file in this repo arrives through one of these lines, which is
+        why the order they are written in is the order the assembler sees.
+    </aside>
+</section>
+
+<!-- 15 -->
+<section>
+    <h2>And macros</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2-4|5">
+%macro NEXT 0
+        mov     W, [IP]         ; the execution token IP points at
+        add     IP, 8           ; step past it, ready for next time
+        jmp     [W]             ; jump through the word's code field
+%endmacro
+    </code></pre>
+    <p class="fragment">Write <code>NEXT</code>, get three instructions.</p>
+    <aside class="notes">
+        Copied out of include/mforth.inc, unchanged. This is the real thing,
+        and it is the last three instructions of every word in the system.
+
+        The 0 is how many arguments the macro takes. This one takes none.
+
+        A macro is paste, not call. Nothing jumps anywhere: NEXT written in a
+        file becomes those three lines in that file, every time.
+
+        W and IP are names too, made with %define. IP is rbx and W is rax.
+        Tell the room they will not have to remember that - the point is only
+        that a name can stand for a register, and the file that sets them up
+        is eight lines long.
+
+        Do not explain what NEXT does. That is the next talk. It is here
+        because it is the smallest real macro in the repo.
+    </aside>
+</section>
+
+<!-- 16 -->
+<section>
+    <h2>Two ways to print a line</h2>
+    <p>Ask the kernel. Or ask the C library to ask the kernel.</p>
+    <aside class="notes">
+        Everything so far has been instructions. Now the one architectural
+        choice in the deck, and mforth has made it: it goes through libc.
+
+        Both of the next two files are in the repo, both build, and both print
+        a line. Say that before showing them - the room should know these are
+        not slide snippets.
+    </aside>
+</section>
+
+<!-- 17 -->
+<section>
+    <h2>The same program, twice</h2>
+    <div class="compare">
+        <div>
+            <p class="label">hello-syscall.asm</p>
+            <pre><code class="language-x86asm" data-trim>
+msg:    db      "Hello from a syscall", 10
+msglen  equ     $ - msg
+
+_start:
+        mov     eax, 1
+        mov     edi, 1
+        mov     rsi, msg
+        mov     edx, msglen
+        syscall
+
+        mov     eax, 60
+        xor     edi, edi
+        syscall
+            </code></pre>
+        </div>
+        <div>
+            <p class="label">hello-libc.asm</p>
+            <pre><code class="language-x86asm" data-trim>
+msg:    db      "Hello from libc", 0
+
+
+main:
+        sub     rsp, 8
+        mov     rdi, msg
+        call    puts
+
+
+        xor     eax, eax
+        add     rsp, 8
+        ret
+            </code></pre>
+        </div>
+    </div>
+    <aside class="notes">
+        Both files are in slides/examples/ and both are built by the Makefile
+        next to them.
+
+        Left: no libc at all. The kernel starts the program at _start, and
+        nothing runs before it. Number 1 is write, number 60 is exit. It has
+        to end itself, because there is nowhere to return to.
+
+        Right: libc's startup code runs first and calls main, so returning
+        from main is enough. puts finds the end of the string by looking for
+        the zero byte, which is why the left one carries a length and the
+        right one does not. The left one also writes its own newline; puts
+        adds one.
+
+        The sub rsp, 8 is the 16-byte alignment rule from four slides back.
+
+        There is a smaller file still, exit-syscall.asm, which is three
+        instructions and no output. Mention it if anyone asks what the
+        smallest program is.
+    </aside>
+</section>
+
+<!-- 18 -->
+<section>
+    <h2>Two conventions</h2>
+    <table class="pairs">
+        <tr><td>syscall</td><td>number in <code>rax</code>, then <code>rdi rsi rdx <span class="mark">r10</span> r8 r9</code></td></tr>
+        <tr><td>call</td><td>address in the instruction, then <code>rdi rsi rdx <span class="mark">rcx</span> r8 r9</code></td></tr>
+    </table>
+    <p class="fragment">Argument four moves, because <code>syscall</code> destroys <code>rcx</code> itself.</p>
+    <aside class="notes">
+        Nearly the same, and the two marked registers are the whole
+        difference.
+
+        The syscall instruction writes its own return address into rcx and
+        the flags into r11. Two registers destroyed by the act of making the
+        call, so neither can carry an argument in, and argument four goes to
+        r10 instead. Not taste, and not a kernel whim.
+
+        mforth makes no syscalls anywhere. Every line of output in the whole
+        interpreter goes through puts, putchar or printf. So the System V
+        convention is the only contract its words have to keep, and that is
+        one fewer thing to hold in your head this afternoon.
+    </aside>
+</section>
+
+<!-- 19 -->
+<section>
+    <h2>Building it</h2>
+    <pre class="wide"><code class="language-plaintext" data-trim data-line-numbers="1|2">
+nasm -f elf64 src/mforth.asm -o build/mforth.o
+clang -no-pie build/mforth.o -o build/mforth
+    </code></pre>
+    <p class="fragment">Assemble, then link. <code>make</code> runs both.</p>
+    <aside class="notes">
+        Two steps and two tools. nasm turns one text file into one object
+        file. clang hands that object to the linker, which resolves puts and
+        printf against the system libc and writes the program.
+
+        elf64 is the object format Linux uses. The whole repo is Linux and
+        x86-64 only.
+
+        Which is a problem on this laptop, because it is neither. Everything
+        builds in a container, nasm-docker-amd64, with the repository mounted
+        inside it. That is one docker exec in front of every make, and it is
+        in the README.
+
+        DEMO, if the room is awake. Build and run the two files from earlier:
+
+        docker exec -w /Workspace/mforth/slides/examples nasm-docker-amd64 make run
+
+        It prints "Hello from a syscall" and then "Hello from libc".
+    </aside>
+</section>
+
+<!-- 20 -->
+<section>
+    <h2>What <code>-no-pie</code> buys</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim>
+mov     rdi, msg        ; the address of msg
+call    puts            ; call it by name
+    </code></pre>
+    <p class="fragment">Under the default, both lines have to be written differently.</p>
+    <pre class="wide fragment"><code class="language-plaintext" data-trim>
+relocation R_X86_64_PC32 against symbol
+'puts@@GLIBC_2.2.5' can not be used when
+making a PIE object
+    </code></pre>
+    <aside class="notes">
+        clang defaults to a position-independent executable, one the kernel
+        can load at any address. Nothing there is wrong, and it costs these
+        two lines their plain form: the call becomes "call puts wrt ..plt" and
+        the address becomes "lea rdi, [rel msg]".
+
+        This repo exists to be read aloud, so it links -no-pie instead. In a
+        non-PIE program a label is a number the linker knows, and both lines
+        stay as written.
+
+        The error is worth showing because you will meet it. The fix is
+        -no-pie on the link line, never "wrt ..plt" on the call. The reasoning
+        is in docs/adr/0001-link-non-pie.md, and the trap is in AGENTS.md.
+    </aside>
+</section>
+
+<!-- 21 -->
+<section>
+    <h2>Bonus: one instruction, three jobs</h2>
+    <div class="compare">
+        <div>
+            <p class="label">x86-64</p>
+            <pre><code class="language-x86asm" data-trim>
+add     [rax], rbx
+            </code></pre>
+        </div>
+        <div>
+            <p class="label">arm64</p>
+            <pre><code class="language-armasm" data-trim>
+ldr     x2, [x0]
+add     x2, x2, x1
+str     x2, [x0]
+            </code></pre>
+        </div>
+    </div>
+    <p class="fragment">Read the cell, add to it, write it back.</p>
+    <aside class="notes">
+        Both files are in slides/examples/, and the x86 one runs: it prints
+        "cell = 40" and then "cell = 42".
+
+        This is what CISC means, in one line. An x86 instruction may name a
+        register and a memory address, and do the arithmetic between them.
+        Three memory operations in one instruction: read, add, write.
+
+        arm64 is a load/store architecture and does not allow it. Arithmetic
+        happens between registers, and memory is reached only by a load or a
+        store. So the same work is named in three instructions, and the
+        machine you are holding is the one that needs three.
+
+        Neither is better. The RISC argument is that three simple
+        instructions pipeline better than one complicated one, and it largely
+        won. The x86 one is shorter to read, which is what today is about.
+    </aside>
+</section>
+
+<!-- 22 -->
+<section>
+    <h2>And this afternoon</h2>
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3">
+mov     rax, [DSP]              ; n2, the top item
+add     DSP, 8                  ; drop it
+add     [DSP], rax              ; and add it to the one underneath
+    </code></pre>
+    <p class="fragment">Forth's <code>+</code>, whole.</p>
+    <aside class="notes">
+        Out of src/words.asm, unchanged, and it is the word that adds two
+        numbers.
+
+        The third line is the instruction from the last slide, doing exactly
+        the job it was made for: the answer belongs on the stack, in memory,
+        so read it, add to it, and put it back without ever giving it a name.
+
+        A Forth on arm64 writes this word with five instructions instead of
+        three. That is the whole of the difference, and it is why a Forth and
+        a CISC machine suit each other.
+
+        Three instructions. That is a Forth word. This afternoon is about a
+        hundred more of them.
+    </aside>
+</section>
+
+<!-- 23 -->
+<section>
+    <h2>Optional: a loop in one instruction</h2>
+    <div class="compare">
+        <div>
+            <p class="label">x86-64</p>
+            <pre><code class="language-x86asm" data-trim>
+mov     rsi, source
+mov     rdi, dest
+mov     rcx, 1000
+rep     movsb
+            </code></pre>
+        </div>
+        <div>
+            <p class="label">arm64</p>
+            <pre><code class="language-armasm" data-trim>
+mov     x2, #1000
+copy:   ldrb    w3, [x0], #1
+        strb    w3, [x1], #1
+        sub     x2, x2, #1
+        cbnz    x2, copy
+            </code></pre>
+        </div>
+    </div>
+    <p class="fragment">The same copy. Only one of them needs a label.</p>
+    <aside class="notes">
+        Skip this slide if the clock says so. Nothing later needs it.
+
+        movsb copies one byte from the address in rsi to the address in rdi
+        and steps both pointers. rep says: do that rcx times, counting down. A
+        whole copy loop, with its test and its branch, inside one instruction.
+
+        This is the far end of CISC, and it is where those old register duties
+        on slide 3 come from - source, destination, count, sitting in rsi, rdi
+        and rcx exactly as the names say.
+
+        On the right the loop is written out, because arm64 has no
+        instruction like it. Read the last two lines as one sentence: take one
+        off the count, and branch back to copy while the count is not zero.
+        cbnz is compare-and-branch-on-non-zero, and it needs no flags. Both
+        examples assemble; the arm64 one was built with clang on this laptop.
+
+        mforth does not use rep movsb. It is here because when someone asks
+        what CISC ever bought anybody, this is the answer, and on modern CPUs
+        it is genuinely fast: the chip recognises the pattern and copies a
+        cache line at a time.
+    </aside>
+</section>
+
+<!-- 24 -->
+<section>
+    <h2>What you now know</h2>
+    <ul>
+        <li>Sixteen registers, and which ones survive a call.</li>
+        <li>Brackets mean memory.</li>
+        <li><code>cmp</code> decides, the jump acts.</li>
+        <li><code>call</code> remembers where to come back to.</li>
+        <li>NASM pastes files and macros before it assembles.</li>
+    </ul>
+    <aside class="notes">
+        Five things. Everything this afternoon is built out of them.
+
+        Point out what is not on the list and never will be: no floating
+        point, no SIMD, no atomics, no threads. A Forth needs none of it, and
+        the instruction set you have just seen is the whole of what two
+        thousand lines of mforth are written in.
+    </aside>
+</section>
+
+<!-- 25 -->
+<section>
+    <h2>Next</h2>
+    <p>The repository.</p>
+    <p class="fragment">Commit by commit, read aloud.</p>
+    <aside class="notes">
+        Both intros are done. From here the talk is the code: the commits in
+        order, from an empty file to a Forth that compiles its own words.
+
+        If anyone wants the decks afterwards, they are in the repo, in
+        slides/, with these notes attached.
+    </aside>
+</section>
+
+    </div>
+</div>
+
+<script src="../vendor/reveal/reveal.js"></script>
+<script src="../vendor/reveal/plugin/highlight.js"></script>
+<script src="../vendor/reveal/plugin/notes.js"></script>
+<script src="../theme/forth-highlight.js"></script>
+<script src="../theme/x86-grammar.js"></script>
+<script>
+    Reveal.initialize({
+        hash: true,
+        slideNumber: 'c/t',
+        plugins: [RevealHighlight, RevealNotes],
+        highlight: {
+            // highlight.js knows x86asm already, but gets two things
+            // wrong that ../theme/x86-grammar.js corrects. Forth it does
+            // not know at all, so it is handed the grammar from
+            // ../theme/forth-highlight.js here. The vendored plugin stays
+            // untouched either way.
+            beforeHighlight: hljs => {
+                hljs.registerLanguage('forth', forthLanguage);
+                fixX86Grammar(hljs);
+            },
+        },
+    });
+</script>
+
+</body>
+</html>

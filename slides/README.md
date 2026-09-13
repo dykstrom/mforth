@@ -40,22 +40,34 @@ the deck on the projector.
 | Path | What is there |
 |------|---------------|
 | `index.html` | Links the decks |
-| `template/index.html` | A four-slide skeleton to copy when starting a deck |
+| `forth/index.html` | The Forth deck |
+| `asm/index.html` | The x86-64 assembly deck |
 | `theme/mforth.css` | The style both decks load. The only place the accent colours live |
 | `theme/forth-highlight.js` | A highlight.js grammar for Forth, which highlight.js does not ship |
+| `theme/x86-grammar.js` | Two corrections to highlight.js's x86 grammar: a label after a blank line, and the missing `%macro` |
 | `examples/` | The assembly sources the x86-64 deck quotes, with a Makefile that builds and runs them. See `examples/README.md` |
 | `vendor/reveal/` | reveal.js, committed. See `vendor/README.md` |
 
 ## Writing a deck
 
-Copy `template/index.html` and change the class on `<body>`: `deck-forth`
-gives the green accent, `deck-asm` the amber one. Both are defined in
-`theme/mforth.css`, and a deck sets no colour of its own.
+Copy `forth/index.html` or `asm/index.html` and take the slides out. The
+class on `<body>` picks the accent: `deck-forth` is green, `deck-asm` amber.
+Both are defined in `theme/mforth.css`, and a deck sets no colour of its own.
 
 Mark a code block with the language: `class="language-x86asm"` for NASM,
 `class="language-forth"` for Forth, `class="language-armasm"` for arm64. Add
 `data-line-numbers="1|2-3"` to reveal the block a step at a time, one group of
 lines per press.
+
+Mark the one word on a line the eye should find first with
+`<span class="mark">`. The assembly deck uses it for the register that differs
+between two rows.
+
+Put two things side by side with `<div class="compare">` holding two `<div>`s,
+each starting with a `<p class="label">`. The assembly deck uses it for one
+source file against another. A code line inside one of those columns has room
+for about 48 characters, so strip the comments off a block that goes in and
+put what they said in the speaker notes.
 
 A code line runs off the right edge past 56 characters, and nothing warns you.
 Put `class="wide"` on the `<pre>` when a line is longer. Keep a wide block

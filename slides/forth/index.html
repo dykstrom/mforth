@@ -727,13 +727,22 @@ not negative
 <script src="../vendor/reveal/plugin/highlight.js"></script>
 <script src="../vendor/reveal/plugin/notes.js"></script>
 <script src="../theme/forth-highlight.js"></script>
+<script src="../theme/x86-grammar.js"></script>
 <script>
     Reveal.initialize({
         hash: true,
         slideNumber: 'c/t',
         plugins: [RevealHighlight, RevealNotes],
         highlight: {
-            beforeHighlight: hljs => hljs.registerLanguage('forth', forthLanguage),
+            // highlight.js knows x86asm already, but gets two things
+            // wrong that ../theme/x86-grammar.js corrects. Forth it does
+            // not know at all, so it is handed the grammar from
+            // ../theme/forth-highlight.js here. The vendored plugin stays
+            // untouched either way.
+            beforeHighlight: hljs => {
+                hljs.registerLanguage('forth', forthLanguage);
+                fixX86Grammar(hljs);
+            },
         },
     });
 </script>

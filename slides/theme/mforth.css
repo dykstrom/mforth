@@ -187,6 +187,47 @@ body {
     text-align: left;
 }
 
+/* The one thing on a line the eye should find first: the register that
+ * differs between two rows, the flag that changes a command. Wrap it in
+ * <span class="mark">. Everything around it keeps the colour it had, so the
+ * mark is the only thing that moves, and the audience stops counting along a
+ * row of near-identical names to find what changed. */
+.reveal .mark {
+    color: var(--accent);
+}
+
+/* Two things side by side, each under a name: one source file against
+ * another, or one instruction against the three it takes elsewhere. Write two
+ * divs inside .compare, each holding a .label and then whatever is compared.
+ *
+ * The line-width budget again, and it is tighter here. A column is half of
+ * the 960 units, so at 0.62em a code line of about 48 characters reaches the
+ * edge of its column. Strip the comments off a block that goes in here and
+ * put what they said in the speaker notes. */
+.reveal .compare {
+    display: flex;
+    gap: 1.2em;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.reveal .compare > div {
+    flex: 1;
+    min-width: 0;                       /* let a column shrink, not overflow */
+}
+
+.reveal .compare .label {
+    margin: 0;                          /* the block below brings its own */
+    color: var(--accent);
+    font-family: var(--r-code-font);
+    font-size: 0.55em;
+    letter-spacing: 0.05em;
+}
+
+.reveal .compare pre code {
+    font-size: 0.62em;
+}
+
 /* Headings sit closer to what follows them than the theme allows. */
 .reveal h1, .reveal h2, .reveal h3 {
     text-transform: none;

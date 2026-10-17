@@ -8,8 +8,7 @@
     // address randomisation off, so an address is the same on every run.
     "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"],
 
-    // The lab pages, served from the repository root because they load the
-    // highlighter and the x86 grammar from slides/. Codespaces forwards the
+    // The lab pages, served by lab/tools/serve.py. Codespaces forwards the
     // port and opens the pages in a browser tab of their own.
     //
     // It starts on attach, not on start: a codespace that stops after half an
@@ -17,7 +16,7 @@
     // pages were gone. Attaching to a codespace whose server is still up just
     // starts a second one that finds the port taken and exits. setsid takes
     // the server out of the command's process group, so it outlives it.
-    "postAttachCommand": "setsid nohup python3 -m http.server 8000 --directory ${containerWorkspaceFolder} >> /tmp/lab-pages.log 2>&1 &",
+    "postAttachCommand": "setsid nohup python3 ${containerWorkspaceFolder}/lab/tools/serve.py ${containerWorkspaceFolder} >> /tmp/lab-pages.log 2>&1 &",
     "forwardPorts": [8000],
     "portsAttributes": {
         "8000": { "label": "Lab pages", "onAutoForward": "openBrowser" }

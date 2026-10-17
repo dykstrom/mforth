@@ -54,7 +54,7 @@ or `./debug` cannot read the registers. See the comment at the top of
 | `tiers/` | A tier's notes, for what the tier needs that the talk doesn't cover |
 | `check`, `debug` | The two commands |
 | `docker-shell` | Runs the lab outside Codespaces |
-| `tools/` | What `check` and `debug` share: the build, the C side of the tests, gdb's settings, and the register list for gdb under Rosetta |
+| `tools/` | What `check` and `debug` share: the build, the C side of the tests, gdb's settings, and the register list for gdb under Rosetta. Also `serve.py`, the pages' web server, which sends `/` on to `/lab/` |
 | `vendor/` | marked, which renders the Markdown. See `vendor/README.md` |
 
 The pages load highlight.js and the x86 grammar fix from `../slides/`, so they

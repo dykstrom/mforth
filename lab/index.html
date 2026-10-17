@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>x86-64 lab</title>
+<link rel="stylesheet" href="../slides/vendor/reveal/plugin/highlight/monokai.css">
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main>
+    <h1>x86-64 lab</h1>
+    <p class="intro">
+        Start with tier 0. After that, pick any tier, in any order: each one
+        stands on its own and runs from easy to hard. The dots are the
+        difficulty. Tick an exercise done on its page, and this browser
+        remembers it.
+    </p>
+    <p class="intro">
+        Every command runs in the terminal, in <code>lab/</code>.
+        <code>./check</code> shows where you are with every exercise.
+    </p>
+
+    <div id="lab"></div>
+
+    <p class="note">Greyed-out exercises are not written yet.</p>
+</main>
+
+<script src="../slides/vendor/reveal/plugin/highlight.js"></script>
+<script src="../slides/theme/x86-grammar.js"></script>
+<script src="vendor/marked/marked.umd.js"></script>
+<script src="lab.js"></script>
+<script>showMenu(document.getElementById('lab'));</script>
+</body>
+</html>

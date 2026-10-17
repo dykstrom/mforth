@@ -1,0 +1,115 @@
+#!/bin/sh
+#
+# check - build the lab exercises and run their tests.
+#
+#     ./check               one line for every exercise
+#     ./check c2            just c2, with every case its test ran
+#     ./check --solutions   the same, built from each solution.asm instead.
+#                           For the presenter: every line should say PASS.
+#
+# An exercise whose file still has its TODO marker in it, and does not pass,
+# is "not started" rather than FAIL in the one-line-each list. Someone who
+# went straight to tier C should not be greeted by a column of failures.
+
+set -u
+cd "$(dirname "$0")" || exit 1
+. tools/build.sh
+
+variant=exercise
+if [ "${1-}" = --solutions ]; then
+    variant=solution
+    shift
+fi
+
+# run <exercise dir>: build the exercise and run its test.
+#
+# Sets $src to the file built, $out to where the build went, and $result to
+# one of pass, fail, crash, timeout or nobuild. The test's output is left in
+# $out/output.
+run() {
+    if [ $variant = solution ]; then
+        src=$1/solution.asm
+    else
+        src=$1/$(exercise_function "$1").asm
+    fi
+    out=build/$(basename "$1")/$variant
+
+    if ! build "$1" "$src" "$out"; then
+        result=nobuild
+        return
+    fi
+
+    # An endless loop is an easy mistake in assembly, and it would hang the
+    # whole list. Five seconds is far longer than any test takes.
+    #
+    # The tests write only to standard output. What arrives on standard error
+    # is timeout's own "Segmentation fault (core dumped)", and crashed() below
+    # says that better.
+    timeout 5 "$out/test" > "$out/output" 2> /dev/null
+    status=$?
+    case $status in
+        0)   result=pass ;;
+        1)   result=fail ;;
+        124) result=timeout ;;
+        *)   result=crash ;;
+    esac
+}
+
+# What a crash was: the case the test was in, which is the last line it
+# printed, left unfinished by begin() in tools/check.h, and the signal that
+# ended it. A process killed by a signal exits with 128 plus its number.
+crashed() {
+    case $status in
+        139) signal="a segmentation fault: a read or write at an address that is not mapped" ;;
+        136) signal="an arithmetic error, such as idiv by zero" ;;
+        132) signal="an illegal instruction" ;;
+        *)   signal="signal $((status - 128))" ;;
+    esac
+    echo "$(tail -n 1 "$out/output" | sed 's/ \.\.\. $//') crashed with $signal"
+}
+
+# One exercise, in full: everything the build said if it failed, otherwise
+# every line the test printed.
+check_one() {
+    dir=$(exercise_dir "$1") || { echo "There is no exercise $1." >&2; exit 2; }
+    run "$dir"
+    case $result in
+        nobuild) cat "$out/errors" ;;
+        timeout) cat "$out/output"; echo; echo "Stopped after 5 seconds. An endless loop?" ;;
+        crash)   cat "$out/output"; echo; crashed ;;
+        *)       cat "$out/output" ;;
+    esac
+    [ $result = pass ]
+}
+
+# Every exercise, one line each.
+check_all() {
+    overall=0
+    for dir in exercises/*/; do
+        dir=${dir%/}
+        name=$(basename "$dir")
+        run "$dir"
+
+        if [ $result != pass ] && [ $variant = exercise ] && grep -q TODO "$src"; then
+            line="not started"
+        else
+            case $result in
+                pass)    line=PASS ;;
+                fail)    line="FAIL  $(grep -v ' \.\.\. ok$' "$out/output" | head -n 1)" ;;
+                crash)   line="CRASH  $(crashed)" ;;
+                timeout) line="TIMEOUT: still running after 5 seconds" ;;
+                nobuild) line="does not build: ./check ${name%%-*} shows why" ;;
+            esac
+        fi
+        [ $result = pass ] || overall=1
+
+        printf '%-4s %-12s %s\n' "${name%%-*}" "${name#*-}" "$line"
+    done
+    return $overall
+}
+
+if [ $# -eq 0 ]; then
+    check_all
+else
+    check_one "$1"
+fi

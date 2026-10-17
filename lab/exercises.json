@@ -1,0 +1,72 @@
+{
+    "tiers": [
+        {
+            "id": "0",
+            "title": "Start here",
+            "blurb": "Ten minutes: run a test, fix a function, step through it in gdb. Every other tier assumes you have done this one.",
+            "exercises": [
+                { "id": "01", "dir": "01-answer", "title": "answer", "difficulty": 1 }
+            ]
+        },
+        {
+            "id": "A",
+            "title": "Integers and loops",
+            "blurb": "Arithmetic, comparisons, jumps and walking through memory.",
+            "exercises": [
+                { "id": "a1", "title": "add", "difficulty": 1 },
+                { "id": "a2", "title": "max", "difficulty": 1 },
+                { "id": "a3", "title": "abs", "difficulty": 1 },
+                { "id": "a4", "title": "strlen", "difficulty": 2 },
+                { "id": "a5", "title": "sum an array", "difficulty": 2 },
+                { "id": "a6", "title": "uppercase in place", "difficulty": 3 }
+            ]
+        },
+        {
+            "id": "B",
+            "title": "The stack and calls",
+            "blurb": "Calling libc, keeping callee-saved registers, recursion, and the 16-byte rule.",
+            "exercises": [
+                { "id": "b1", "title": "call puts", "difficulty": 1 },
+                { "id": "b2", "title": "print with printf", "difficulty": 2 },
+                { "id": "b3", "title": "keep rbx", "difficulty": 2 },
+                { "id": "b4", "title": "factorial, recursively", "difficulty": 3 }
+            ]
+        },
+        {
+            "id": "C",
+            "title": "Floating point",
+            "blurb": "The xmm registers, doubles in and out of functions, and four floats at once.",
+            "intro": "tiers/c-float.md",
+            "exercises": [
+                { "id": "c1", "title": "c_to_f", "difficulty": 1 },
+                { "id": "c2", "dir": "c2-average", "title": "average", "difficulty": 2 },
+                { "id": "c3", "title": "hypot", "difficulty": 1 },
+                { "id": "c4", "title": "clamp", "difficulty": 2 },
+                { "id": "c5", "title": "print a double", "difficulty": 2 },
+                { "id": "c6", "title": "polynomial", "difficulty": 3 },
+                { "id": "c7", "title": "four floats at once", "difficulty": 3 }
+            ]
+        },
+        {
+            "id": "D",
+            "title": "Debugger puzzles",
+            "blurb": "A program with no source. Find the input that gets it through each phase.",
+            "exercises": [
+                { "id": "d1", "title": "phase 1", "difficulty": 1 },
+                { "id": "d2", "title": "phase 2", "difficulty": 2 },
+                { "id": "d3", "title": "phase 3", "difficulty": 3 }
+            ]
+        },
+        {
+            "id": "E",
+            "title": "Build a Forth",
+            "blurb": "Write the inner interpreter and five words, until 2 3 + . prints 5.",
+            "exercises": [
+                { "id": "e1", "title": "NEXT", "difficulty": 2 },
+                { "id": "e2", "title": "DUP and SWAP", "difficulty": 2 },
+                { "id": "e3", "title": "+", "difficulty": 2 },
+                { "id": "e4", "title": "the dot", "difficulty": 3 }
+            ]
+        }
+    ]
+}

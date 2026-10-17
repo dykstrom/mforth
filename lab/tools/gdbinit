@@ -1,0 +1,14 @@
+# gdbinit - the settings ./debug gives gdb before anything else.
+
+# Show instructions the way nasm writes them, "mov rax, 42", rather than the
+# AT&T way gdb defaults to, "mov $0x2a,%rax".
+set disassembly-flavor intel
+
+# Ubuntu's gdb otherwise stops at the first run to ask whether to download
+# debug symbols for libc. The lab never needs them.
+set debuginfod enabled off
+
+# Quit without asking whether to kill the program, and never stop a long
+# listing to ask for a key press.
+set confirm off
+set pagination off

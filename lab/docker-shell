@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# docker-shell - the lab on your own machine, for anyone not in Codespaces.
+#
+#     lab/docker-shell
+#
+# Run it on your machine, not in a container. It builds the image that
+# .devcontainer/Dockerfile describes (the first time takes a few minutes;
+# after that it is cached), then opens a shell inside it, in lab/, with the
+# lab pages at http://localhost:8000/lab/.
+#
+# Edit the files with any editor on your machine. The repository is shared
+# with the container, so the shell sees every change you save.
+#
+# On an Apple Silicon Mac, Docker has to run x86-64 programs with Rosetta,
+# or ./debug cannot work. Docker Desktop: Settings, General, "Use Rosetta for
+# x86_64/amd64 emulation on Apple Silicon". Colima: colima start --vz-rosetta.
+#
+# The two security options are the ones .devcontainer/devcontainer.json
+# passes, for the same reason: they let gdb stop a program and read its
+# registers.
+
+set -eu
+
+repo=$(cd "$(dirname "$0")/.." && pwd)
+
+docker build --platform linux/amd64 -t x86-lab "$repo/.devcontainer"
+
+exec docker run -it --rm --platform linux/amd64 \
+    --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+    -p 8000:8000 \
+    -v "$repo:/workspace" -w /workspace/lab \
+    x86-lab \
+    sh -c 'python3 -m http.server 8000 --directory /workspace > /tmp/lab-pages.log 2>&1 &
+           echo "The lab pages are at http://localhost:8000/lab/"
+           exec bash'

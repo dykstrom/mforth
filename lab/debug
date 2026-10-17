@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# debug - run an exercise's test under gdb, stopped at your function.
+#
+#     ./debug c2
+#
+# The test calls your function once per case, and gdb stops at its first
+# instruction every time. The commands that matter:
+#
+#     si          run one instruction
+#     c           continue, to the next case
+#     p $rax      print a register
+#     q           quit
+#
+# The test's own output goes to build/<exercise>/debug-output instead of the
+# screen, where it would draw over gdb's windows.
+
+set -u
+cd "$(dirname "$0")" || exit 1
+. tools/build.sh
+
+if [ $# -ne 1 ]; then
+    echo "Say which exercise, for example: ./debug c2" >&2
+    exit 2
+fi
+dir=$(exercise_dir "$1") || { echo "There is no exercise $1." >&2; exit 2; }
+fn=$(exercise_function "$dir")
+out=build/$(basename "$dir")/exercise
+
+if ! build "$dir" "$dir/$fn.asm" "$out"; then
+    cat "$out/errors"
+    exit 1
+fi
+
+# On an Apple Silicon Mac the container's x86-64 programs run under Rosetta,
+# which does not let gdb read their registers the usual way. It has a gdb
+# server of its own instead: a program started with ROSETTA_DEBUGSERVER_PORT
+# set waits on that port until gdb connects. Everywhere else, gdb runs the
+# test itself.
+if readlink /proc/$$/exe | grep -q rosetta; then
+    rosetta=yes
+else
+    rosetta=no
+fi
+
+# What gdb does, in order: settings, a breakpoint, then start the test.
+id=$1
+set -- -q -x tools/gdbinit -ex "break $fn"
+if [ $rosetta = yes ]; then
+    ROSETTA_DEBUGSERVER_PORT=1234 "$out/test" > "$out/debug-output" 2>&1 &
+    sleep 1
+    set -- "$@" -ex "set tdesc filename tools/rosetta-registers.xml" \
+        -ex "target remote :1234" -ex continue
+else
+    set -- "$@" -ex "run > $out/debug-output 2>&1"
+fi
+
+# Once it has stopped, the register window. Only on a terminal: gdb will not
+# draw windows anywhere else. A tier C exercise shows the SSE registers,
+# where its doubles are, instead of the integer ones.
+if [ -t 1 ]; then
+    set -- "$@" -ex "layout regs"
+    case $id in
+        c*) set -- "$@" -ex "tui reg sse" ;;
+    esac
+fi
+
+gdb "$@" "$out/test"
+
+# If gdb quit before the test ended, the test is still waiting on its port.
+if [ $rosetta = yes ]; then
+    kill $! 2> /dev/null
+fi

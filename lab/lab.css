@@ -1,0 +1,257 @@
+/* The lab pages: the menu (index.html) and one exercise (page.html).
+ *
+ * The accent is the assembly deck's amber, from ../slides/theme/mforth.css.
+ * The code colours are highlight.js's monokai, the theme the decks use, so a
+ * line of NASM looks the same on a slide and on a lab page. Code stays dark
+ * in a light page for the same reason: it is the terminal's colour.
+ */
+
+:root {
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --text: #1d1c19;
+    --muted: #6b675e;
+    --line: #e4e0d6;
+    --accent: #a86a00;          /* the amber, dark enough to read on white */
+    --accent-soft: #f6ead2;
+    --done: #2f7d3b;
+    --code-bg: #272822;         /* monokai's background */
+    --code-text: #f8f8f2;
+    --mono: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #141311;
+        --surface: #1d1c19;
+        --text: #ece8df;
+        --muted: #a39e92;
+        --line: #33312c;
+        --accent: #ffb000;      /* the deck's amber as it is */
+        --accent-soft: #3a2c0c;
+        --done: #7ee787;
+        color-scheme: dark;
+    }
+}
+
+:root[data-theme="dark"] {
+    --bg: #141311;
+    --surface: #1d1c19;
+    --text: #ece8df;
+    --muted: #a39e92;
+    --line: #33312c;
+    --accent: #ffb000;
+    --accent-soft: #3a2c0c;
+    --done: #7ee787;
+    color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+}
+
+a { color: var(--accent); }
+
+h1, h2, h3 { line-height: 1.25; }
+h1 { font-size: 1.9rem; margin: 0.2em 0 0.4em; }
+h2 { font-size: 1.3rem; margin-top: 2em; }
+
+code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--accent-soft);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+}
+
+/* Code blocks: monokai, with the deck's accent stripe down the side. */
+pre {
+    position: relative;
+    margin: 1em 0;
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    background: var(--code-bg);
+    overflow-x: auto;
+}
+
+pre code,
+pre code.hljs {
+    display: block;
+    padding: 14px 18px;
+    background: none;
+    color: var(--code-text);
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+/* A shell command gets a copy button, because it is meant to be pasted
+ * into the terminal as it stands. */
+pre.command code { padding-right: 84px; }
+
+.copy {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font: 600 0.75rem/1 var(--mono);
+    color: var(--code-text);
+    background: #3e3d32;
+    border: 1px solid #5a594d;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+.copy:hover { background: #4a493c; }
+
+table {
+    border-collapse: collapse;
+    margin: 1em 0;
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+}
+th, td {
+    text-align: left;
+    padding: 6px 12px 6px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+}
+th { color: var(--muted); font-weight: 600; font-size: 0.9rem; }
+
+/* Hints: closed until asked for, one at a time. */
+details {
+    margin: 0.75em 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    padding: 0 16px;
+}
+details > summary {
+    cursor: pointer;
+    padding: 10px 0;
+    font-weight: 600;
+    color: var(--accent);
+}
+details[open] { padding-bottom: 8px; }
+
+/* The line above an exercise's title: where it is in the lab. */
+.crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+.crumbs a { text-decoration: none; }
+
+.dots { color: var(--accent); letter-spacing: 2px; font-size: 0.8rem; }
+.dots .off { opacity: 0.25; }
+
+/* The solution, behind its button. */
+.solution {
+    margin-top: 2.5em;
+    padding-top: 1.5em;
+    border-top: 1px solid var(--line);
+}
+.solution p { color: var(--muted); margin-top: 0; }
+
+button.reveal {
+    font: inherit;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+button.reveal:hover { background: var(--accent-soft); }
+
+/* Done, and where to go next. */
+.finish {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2em;
+    padding: 16px;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+}
+.finish label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.finish input { width: 18px; height: 18px; accent-color: var(--done); }
+
+/* The menu. */
+.intro { color: var(--muted); max-width: 60ch; }
+
+.tiers {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+@media (max-width: 400px) {
+    .tiers { grid-template-columns: 1fr; }
+}
+
+.tier {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+}
+.tier h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+}
+.tier .letter {
+    font-family: var(--mono);
+    color: var(--accent);
+}
+.tier .blurb { color: var(--muted); font-size: 0.92rem; margin: 6px 0 10px; }
+.tier .read-first { font-size: 0.92rem; margin: 0 0 8px; }
+
+.tier ol { list-style: none; margin: 0; padding: 0; }
+.tier li {
+    display: grid;
+    grid-template-columns: 22px 34px 1fr auto;
+    align-items: baseline;
+    padding: 4px 0;
+    border-top: 1px solid var(--line);
+}
+.tier li .tick { color: var(--done); }
+.tier li .id { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+.tier li a { text-decoration: none; font-weight: 500; }
+.tier li a:hover { text-decoration: underline; }
+.tier li.planned .name { color: var(--muted); opacity: 0.6; }
+.tier li.planned .dots { opacity: 0.4; }
+
+.note {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 32px;
+}
+
+.error {
+    border: 1px solid #c0392b;
+    border-radius: 6px;
+    padding: 12px 16px;
+    color: #c0392b;
+}

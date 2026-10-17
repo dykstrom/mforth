@@ -727,6 +727,93 @@ copy:   ldrb    w3, [x0], #1
     </aside>
 </section>
 
+<!-- 26 -->
+<section>
+    <h2>Your lab machine</h2>
+    <ol>
+        <li>Sign in to GitHub.</li>
+        <li>Go to <a href="https://codespaces.new/dykstrom/mforth"><code>codespaces.new/dykstrom/mforth</code></a></li>
+        <li>Press <strong>Create codespace</strong>.</li>
+        <li>Wait a few minutes. Only the first start is slow.</li>
+    </ol>
+    <p class="fragment">No GitHub account? Pair with someone who has one.</p>
+    <aside class="notes">
+        Leave this slide up until every hand in the room has a codespace
+        building. It is the only step that needs everyone at once.
+
+        The link is GitHub's own shortcut for a new codespace. The long way
+        round, for anyone who would rather click: the repository's page, the
+        green Code button, the Codespaces tab, Create codespace on main.
+
+        The image is built in GitHub's data centre, not on the laptop, so the
+        venue wifi only has to carry a browser tab. Nobody installs anything,
+        and an Apple Silicon Mac gets a real x86-64 machine.
+
+        It costs nothing. A free account gets sixty hours a month on the
+        default machine, and the morning uses three.
+    </aside>
+</section>
+
+<!-- 27 -->
+<section>
+    <h2>When it opens</h2>
+    <ol>
+        <li>VS Code, in the browser, with a terminal in <code>lab/</code>.</li>
+        <li>The lab pages, in a tab of their own.</li>
+        <li>In the terminal, type <code>./check</code></li>
+        <li>Start with exercise 01.</li>
+    </ol>
+    <p class="fragment">No lab pages? <strong>Ports</strong> tab, then the globe next to <strong>Lab pages</strong>.</p>
+    <aside class="notes">
+        The browser may block the pages' tab as a pop-up. That is the
+        fragment: the Ports tab sits beside the terminal, and the globe opens
+        the same pages.
+
+        ./check prints a line for every exercise, and every one of them should
+        say not started. Anyone who sees an error instead gets help now,
+        before they have written a line.
+
+        A codespace stops itself after thirty minutes without a keystroke.
+        Nothing is lost: github.com/codespaces lists it, and opening it again
+        takes seconds rather than minutes. Delete it there after the lab.
+    </aside>
+</section>
+
+<!-- 28 -->
+<section>
+    <h2>Or on your own machine</h2>
+    <p>Needs Docker. On Apple Silicon, turn on Rosetta.</p>
+    <pre><code class="language-plaintext" data-trim>
+git clone https://github.com/dykstrom/mforth.git
+cd mforth
+lab/docker-shell
+    </code></pre>
+    <p class="fragment">The pages are at <code>localhost:8000</code>.<br>Edit in any editor.</p>
+    <aside class="notes">
+        For anyone who would rather not use Codespaces, or whose wifi gives
+        up. The same image either way: docker-shell builds the Dockerfile the
+        codespace is built from.
+
+        The first run builds the image, which takes a few minutes and
+        downloads a few hundred megabytes. With thirty people on the venue
+        wifi, push people towards Codespaces instead.
+
+        docker-shell leaves you in a shell in lab/, where ./check and ./debug
+        run. The repository is shared with the container, so a file saved in
+        any editor on the laptop is the file the shell sees.
+
+        Rosetta is what lets ./debug read registers on a Mac. Docker Desktop:
+        Settings, General, "Use Rosetta for x86_64/amd64 emulation on Apple
+        Silicon". Colima: colima start --vz-rosetta. Without it, ./debug
+        cannot read the registers.
+
+        On Windows, run all three lines in a WSL terminal, not Git Bash. Git
+        Bash rewrites the paths docker-shell hands to Docker, and a clone made
+        on the Windows side can get Windows line endings, which break the
+        scripts.
+    </aside>
+</section>
+
     </div>
 </div>
 

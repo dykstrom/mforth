@@ -13,23 +13,24 @@
             "title": "Integers and loops",
             "blurb": "Arithmetic, comparisons, jumps and walking through memory.",
             "exercises": [
-                { "id": "a1", "title": "add", "difficulty": 1 },
-                { "id": "a2", "title": "max", "difficulty": 1 },
-                { "id": "a3", "title": "abs", "difficulty": 1 },
-                { "id": "a4", "title": "strlen", "difficulty": 2 },
-                { "id": "a5", "title": "sum an array", "difficulty": 2 },
-                { "id": "a6", "title": "uppercase in place", "difficulty": 3 }
+                { "id": "a1", "dir": "a1-add", "title": "add", "difficulty": 1 },
+                { "id": "a2", "dir": "a2-max", "title": "max", "difficulty": 1 },
+                { "id": "a3", "dir": "a3-abs_value", "title": "abs", "difficulty": 1 },
+                { "id": "a4", "dir": "a4-strlen", "title": "strlen", "difficulty": 2 },
+                { "id": "a5", "dir": "a5-sum", "title": "sum an array", "difficulty": 2 },
+                { "id": "a6", "dir": "a6-upcase", "title": "uppercase in place", "difficulty": 3 }
             ]
         },
         {
             "id": "B",
             "title": "The stack and calls",
             "blurb": "Calling libc, keeping callee-saved registers, recursion, and the 16-byte rule.",
+            "intro": "tiers/b-stack.md",
             "exercises": [
-                { "id": "b1", "title": "call puts", "difficulty": 1 },
-                { "id": "b2", "title": "print with printf", "difficulty": 2 },
-                { "id": "b3", "title": "keep rbx", "difficulty": 2 },
-                { "id": "b4", "title": "factorial, recursively", "difficulty": 3 }
+                { "id": "b1", "dir": "b1-hello", "title": "call puts", "difficulty": 1 },
+                { "id": "b2", "dir": "b2-show_sum", "title": "print with printf", "difficulty": 2 },
+                { "id": "b3", "dir": "b3-sum_squares", "title": "keep rbx", "difficulty": 2 },
+                { "id": "b4", "dir": "b4-factorial", "title": "factorial, recursively", "difficulty": 3 }
             ]
         },
         {
@@ -38,34 +39,36 @@
             "blurb": "The xmm registers, doubles in and out of functions, and four floats at once.",
             "intro": "tiers/c-float.md",
             "exercises": [
-                { "id": "c1", "title": "c_to_f", "difficulty": 1 },
+                { "id": "c1", "dir": "c1-c_to_f", "title": "c_to_f", "difficulty": 1 },
                 { "id": "c2", "dir": "c2-average", "title": "average", "difficulty": 2 },
-                { "id": "c3", "title": "hypot", "difficulty": 1 },
-                { "id": "c4", "title": "clamp", "difficulty": 2 },
-                { "id": "c5", "title": "print a double", "difficulty": 2 },
-                { "id": "c6", "title": "polynomial", "difficulty": 3 },
-                { "id": "c7", "title": "four floats at once", "difficulty": 3 }
+                { "id": "c3", "dir": "c3-hypot", "title": "hypot", "difficulty": 1 },
+                { "id": "c4", "dir": "c4-clamp", "title": "clamp", "difficulty": 2 },
+                { "id": "c5", "dir": "c5-show", "title": "print a double", "difficulty": 2 },
+                { "id": "c6", "dir": "c6-polynomial", "title": "polynomial", "difficulty": 3 },
+                { "id": "c7", "dir": "c7-dot", "title": "four floats at once", "difficulty": 3 }
             ]
         },
         {
             "id": "D",
             "title": "Debugger puzzles",
             "blurb": "A program with no source. Find the input that gets it through each phase.",
+            "intro": "tiers/d-puzzles.md",
             "exercises": [
-                { "id": "d1", "title": "phase 1", "difficulty": 1 },
-                { "id": "d2", "title": "phase 2", "difficulty": 2 },
-                { "id": "d3", "title": "phase 3", "difficulty": 3 }
+                { "id": "d1", "dir": "d1-phase1", "title": "phase 1", "difficulty": 1 },
+                { "id": "d2", "dir": "d2-phase2", "title": "phase 2", "difficulty": 2 },
+                { "id": "d3", "dir": "d3-phase3", "title": "phase 3", "difficulty": 3 }
             ]
         },
         {
             "id": "E",
             "title": "Build a Forth",
-            "blurb": "Write the inner interpreter and five words, until 2 3 + . prints 5.",
+            "blurb": "Write the inner interpreter and four words, until 2 3 + . prints 5.",
+            "intro": "tiers/e-forth.md",
             "exercises": [
-                { "id": "e1", "title": "NEXT", "difficulty": 2 },
-                { "id": "e2", "title": "DUP and SWAP", "difficulty": 2 },
-                { "id": "e3", "title": "+", "difficulty": 2 },
-                { "id": "e4", "title": "the dot", "difficulty": 3 }
+                { "id": "e1", "dir": "e1-next", "title": "NEXT", "difficulty": 2 },
+                { "id": "e2", "dir": "e2-dup", "title": "DUP and SWAP", "difficulty": 2 },
+                { "id": "e3", "dir": "e3-plus", "title": "+", "difficulty": 2 },
+                { "id": "e4", "dir": "e4-dot", "title": "the dot", "difficulty": 3 }
             ]
         }
     ]

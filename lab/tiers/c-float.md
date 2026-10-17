@@ -44,6 +44,11 @@ double scale(const double *a, long n, double factor);
 A double comes back in `xmm0`. No `xmm` register is callee-saved: a function
 may change any of them, and has to assume anything it calls does too.
 
+A function that takes any number of arguments, like `printf`, can't tell from
+its declaration whether any are doubles. The caller puts the number of `xmm`
+registers carrying arguments in `al` before the call: `mov eax, 1` for one
+double, `xor eax, eax` for none.
+
 ## Constants
 
 No instruction takes a floating-point number as an immediate, so `mov xmm0,
@@ -81,6 +86,23 @@ the jumps that follow it are the unsigned ones:
 
 `jg` and `jl` assemble and run, but they test the wrong flags, and they get
 it wrong without any warning.
+
+## Four at once
+
+A float is four bytes, so an `xmm` register holds four of them, in *lanes* 0
+to 3. The `ps` instructions do the same thing to all four lanes at once:
+
+| Instruction | What it does |
+|-------------|--------------|
+| `movaps xmm0, [rdi]` | Load 16 bytes, four floats. The address must be a multiple of 16, or it faults |
+| `movups xmm0, [rdi]` | The same, at any address |
+| `addps`, `mulps` | Four adds or four multiplies, lane by lane. A memory operand must be a multiple of 16, as for `movaps` |
+| `addss` | One add, in lane 0 only |
+| `xorps xmm0, xmm0` | Four zeros |
+
+Getting the four lanes back into one number is a separate step: there is no
+instruction that adds a register's lanes together in one go. C7 shows one
+way to do it.
 
 ## In gdb
 

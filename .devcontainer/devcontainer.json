@@ -11,7 +11,13 @@
     // The lab pages, served from the repository root because they load the
     // highlighter and the x86 grammar from slides/. Codespaces forwards the
     // port and opens the pages in a browser tab of their own.
-    "postStartCommand": "nohup python3 -m http.server 8000 --directory ${containerWorkspaceFolder} > /tmp/lab-pages.log 2>&1 &",
+    //
+    // It starts on attach, not on start: a codespace that stops after half an
+    // hour idle and is opened again did not run postStartCommand, and the
+    // pages were gone. Attaching to a codespace whose server is still up just
+    // starts a second one that finds the port taken and exits. setsid takes
+    // the server out of the command's process group, so it outlives it.
+    "postAttachCommand": "setsid nohup python3 -m http.server 8000 --directory ${containerWorkspaceFolder} >> /tmp/lab-pages.log 2>&1 &",
     "forwardPorts": [8000],
     "portsAttributes": {
         "8000": { "label": "Lab pages", "onAutoForward": "openBrowser" }

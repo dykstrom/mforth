@@ -49,8 +49,11 @@ docs/
 | Delete the build output | `make clean` |
 | Assemble | `nasm -f elf64 <file>.asm -o <file>.o` |
 | Link | `clang -no-pie <file>.o -o <name>` |
+| Build every lab solution and run its test | `docker run --rm --platform linux/amd64 -v "$PWD:/workspace" -w /workspace/lab x86-lab ./check --solutions` |
 
 The Makefile invokes nothing but nasm and clang, so every `make` command needs the container prefix above. See `docs/adr/0002-keep-the-container-out-of-the-makefile.md`.
+
+The lab runs in its own image, `x86-lab`, which `lab/docker-shell` builds from `.devcontainer/Dockerfile`. A `docker run` of it does not need `nasm-docker-amd64`. Docker mounts only directories under the home directory, so a scratch build must go in `lab/build/`, which git ignores, and not in `/tmp`.
 
 The container is not auto-started (restart policy `no`). If `docker exec` fails because Colima or `nasm-docker-amd64` is not running, ask the developer before starting either. Do not run `colima start` or `docker start` unprompted.
 
@@ -62,3 +65,4 @@ The container is not auto-started (restart policy `no`). If `docker exec` fails 
 - The `cat` in the container is the Rust uutils one, not GNU. It holds what it reads from the terminal when its output is a pipe, so `cat lib/prelude.f - | ./build/mforth` answers a typed line only when the next line is typed. Neither `-u` nor `stdbuf` reaches it, because it is not libc stdio. `make run` feeds the terminal half through `sed -u ''` instead. `make test` is unaffected: it compares the output after mforth has ended.
 - A file written on the host is not reliably there for the next `docker exec`. The host is macOS and the repository reaches the container over a mount, so a file created and then read by the command that follows can arrive empty or half-written. Nothing fails: `cat` writes to stderr inside a pipeline that still exits 0, and the run gives a short answer instead of an error. Feed generated input down the container's stdin instead — `docker exec -i -w /Workspace/mforth nasm-docker-amd64 build/mforth` with the text piped in — and write a file only when a later command will read it.
 - Plain gdb does not work in `nasm-docker-amd64`. The container runs x86-64 code through Rosetta, and `gdb build/mforth` fails with "Couldn't get registers: Input/output error". Start the program with `ROSETTA_DEBUGSERVER_PORT=1234` set, then connect gdb with `target remote :1234`. Run the `docker exec` with `--privileged`, because the container was created without `--cap-add=SYS_PTRACE`. Give gdb `set tdesc filename lab/tools/rosetta-registers.xml` before connecting, or the register window stays empty. `lab/debug` does all of this. gdb is not in the image: it was installed into the container by hand. A failed attempt can leave a `core` file of about 275 MB in the working directory.
+- A headless Firefox screenshot of a lab page shows only the static header. `lab/lab.js` fetches the exercise list and each page's Markdown after the page has loaded, and `firefox --screenshot` captures before that. To check a page's text, run its Markdown through `lab/vendor/marked/marked.umd.js` in node, or open the page in a normal Firefox window.

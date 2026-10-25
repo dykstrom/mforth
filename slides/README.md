@@ -1,8 +1,10 @@
 # slides/
 
-Two intro decks run before the main talk: one on Forth, one on x86-64
-assembly. The main talk is the repository itself, walked commit by commit.
-These decks only cover what that walk needs.
+Two decks: one on x86-64 assembly, one on Forth. The assembly deck opens the
+lab morning: enough assembly to start the lab in `lab/`, then what the lab is
+and how to get a machine for it. The Forth deck is from the earlier talk,
+which walked the repository commit by commit, and is no longer part of the
+morning.
 
 ## Opening a deck
 
@@ -76,6 +78,11 @@ under 85 characters, which covers anything copied out of `src/` or
 you are looking at.
 
 Put what you plan to say in `<aside class="notes">` inside the slide.
+
+Some lab pages point at slides in the assembly deck, by title or by what a
+slide shows. `lab/exercises/e3-plus/README.md` names the slide "Forth's +",
+and the tier notes in `lab/tiers/` say what the talk did not cover. Before
+you cut or rename a slide, search `lab/` for its title and its subject.
 
 Nothing in `slides/` is built by the top-level `Makefile`: `make` and
 `make test` do not look here. `examples/` has a Makefile of its own, run

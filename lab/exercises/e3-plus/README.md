@@ -58,7 +58,7 @@ stack, and nothing else needs to move. With `jmp next`, that's four lines.
 
 ## When it passes
 
-Compare your `+` with the one in the talk's slide "And this afternoon". It's
+Compare your `+` with the one in the talk's slide "Forth's +". It's
 mforth's, from `src/words.asm`, and it should be the same three
 instructions. The only difference is the last line: mforth ends with the NEXT
 macro, and this Forth with `jmp next`.

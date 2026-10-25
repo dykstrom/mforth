@@ -25,7 +25,7 @@ mforth is a 64-bit indirect-threaded-code (ITC) Forth for Linux/x86_64, written 
 | `lib/` | `lib/prelude.f`, the words written in Forth. The shell pipes it into mforth ahead of the terminal; nothing in the interpreter loads a file. |
 | `tests/` | `tests/run.sh`, one `.expected` file per test, and the `.f` file feeding it. |
 | `docs/` | Durable project context. Sub-folder layout below shows where each kind of doc goes. |
-| `slides/` | The two intro decks shown before the main talk, and the reveal.js they run on. Nothing here is built: `make` and `make test` ignore it. See `slides/README.md`. |
+| `slides/` | The x86-64 deck that opens the lab, the Forth deck from the earlier talk, and the reveal.js they run on. Nothing here is built: `make` and `make test` ignore it. See `slides/README.md`. |
 | `lab/` | The self-paced assembly lab: exercise pages, `./check` and `./debug`. Runs in its own image, not in `nasm-docker-amd64`, and `make` ignores it. See `lab/README.md`. |
 | `.devcontainer/` | The lab's image, for Codespaces and for `lab/docker-shell`. |
 

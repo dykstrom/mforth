@@ -78,9 +78,9 @@ field and jumps to what it holds. `jmp W` would jump to the code field
 itself, which is data, not code.
 
 mforth pastes these three instructions into the end of every word with a
-macro, which is the NEXT the talk showed. Here every word jumps to one shared
-copy instead. That costs a jump, and gives gdb one place to stop between
-words.
+macro called NEXT, in `include/mforth.inc`. Here every word jumps to one
+shared copy instead. That costs a jump, and gives gdb one place to stop
+between words.
 
 ## The data stack
 

@@ -21,19 +21,21 @@
 <!-- 1 -->
 <section>
     <h1>x86-64</h1>
-    <p>Enough of it to read the next talk.</p>
+    <p>Enough of it to start the lab.</p>
     <aside class="notes">
-        Twenty minutes, and this deck is the one at risk: its notes run to
-        about twenty-one at an unhurried pace before the demo on slide 19.
-        Slide 23 is already marked optional and is the heaviest at about
-        ninety seconds, so drop it first. Then take slides 3 and 6 faster
-        rather than cutting them. Do not cut 13, 17 or 22: the callee-saved
-        split, the two hello worlds and Forth's + are what the afternoon
-        leans on.
+        TIMING
 
-        Every instruction in here is one mforth actually writes, and nothing
-        else is in here. That is the promise: no floating point, no vector
-        instructions, nothing you will not see again this afternoon.
+        Everything else this morning is the lab, so every minute here is a
+        minute less of it. Do not cut 13, 15, 23 or 24: the argument
+        registers, the libc hello world, the six tiers and the first
+        exercise are what the room needs before it starts on its own. The
+        others can all go faster. Slide 20 is already marked optional and is
+        the heaviest at about ninety seconds, so drop it first.
+
+        Every instruction in here turns up in the lab, and the lab goes
+        further than this deck: floating point, the debugger puzzles and the
+        Forth each have a page of notes in the lab. This deck is only enough
+        to make the first tier possible.
 
         If half the room has written assembly before, say so out loud and go
         faster through the first six slides.
@@ -80,8 +82,7 @@
     <aside class="notes">
         Sixteen places to hold a 64-bit value, and reaching one costs nothing.
         Reaching memory costs a lot more. That is the whole reason registers
-        exist, and the reason a Forth written in assembly cares where it keeps
-        its stack pointers.
+        exist.
 
         The left column is old. Every name there is a duty some CPU had in the
         1970s and that we are still living with. rbx is the honest one: it was
@@ -96,9 +97,8 @@
         rbp is convention: nothing in the hardware cares, but a debugger
         walking a backtrace does.
 
-        mforth keeps its whole machine in registers: rbx is the Forth
-        instruction pointer, r12 the data stack pointer, r13 the return stack
-        pointer.
+        Most of the lab's functions need only a handful of these: the
+        arguments arrive in rdi and rsi, and the answer leaves in rax.
     </aside>
 </section>
 
@@ -112,7 +112,7 @@
     </table>
     <p class="fragment">
         <code>rax</code>, <code>eax</code>, <code>ax</code> and <code>al</code>
-        are one register. They name 64, 32, 16 and 8 bits of it.
+        are one register.<br>They name 64, 32, 16 and 8 bits of it.
     </p>
     <aside class="notes">
         Each generation kept the one before it running, so each name is still
@@ -122,8 +122,8 @@
         The accumulator of a 1972 calculator chip, the 8008, is still bits 0
         to 7 of rax on the machine in front of you.
 
-        You will see all four widths in mforth this afternoon, and they always
-        mean the same register.
+        The lab's uppercase exercise, A6, reads a character into eax and
+        writes it back from al. Two names, one register.
     </aside>
 </section>
 
@@ -135,16 +135,16 @@ mov     rax, -1         ; rax = 0xFFFFFFFFFFFFFFFF
 mov     eax, 10         ; rax = 0x000000000000000A  - top half zeroed
 mov     al, 10          ; rax = 0xFFFFFFFFFFFFFF0A  - top 56 bits kept
     </code></pre>
-    <p class="fragment">Writing a 32-bit name clears the upper 32 bits. The smaller names do not.</p>
+    <p class="fragment">Writing a 32-bit name clears the upper 32 bits.<br>The smaller names do not.</p>
     <aside class="notes">
         This is the one surprise in the naming, and it is not a quirk to work
         around. It is a tool.
 
         mov eax, 10 and mov rax, 10 leave the same value in rax, and the
         32-bit form is two bytes shorter, so that is what you write when the
-        value fits. You will see "xor eax, eax" all afternoon where the
-        intention is to clear the whole of rax, and now you know why that is
-        enough.
+        value fits. You will see "xor eax, eax" in the lab's solutions where
+        the intention is to clear the whole of rax, and now you know why that
+        is enough.
     </aside>
 </section>
 
@@ -159,7 +159,7 @@ mov     qword [x], 0    ; size, when nothing implies it
     <p class="fragment">One instruction, one line. The comment is half of it.</p>
     <aside class="notes">
         Destination on the left. This is Intel syntax, which is what NASM
-        speaks and what this repo is written in. If you have read AT&amp;T
+        speaks and what the lab is written in. If you have read AT&amp;T
         syntax before, with the percent signs and the operands the other way
         round, forget it for today.
 
@@ -170,21 +170,20 @@ mov     qword [x], 0    ; size, when nothing implies it
         two, four, eight.
 
         Word means 16 bits here, forever, because it meant 16 bits on the
-        8086. Say that out loud, because the last twenty minutes taught the
-        room that a word is a Forth definition. For the rest of today a word
-        is whichever of the two the surrounding sentence is about, and this
-        is the only slide where it means 16 bits.
+        8086. A dword is a double word and a qword a quad word. The lab's
+        strlen, A4, needs the smallest: cmp byte [rdi + rax], 0.
     </aside>
 </section>
 
 <!-- 7 -->
 <section>
     <h2>Square brackets mean memory</h2>
-    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3|4">
-mov     rax, rbx        ; the value in rbx
-mov     rax, [rbx]      ; the eight bytes rbx points at
-mov     rax, [rbx + 8]  ; the cell one past that
-lea     rax, [rbx + 8]  ; that address, without reading it
+    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3|4|5">
+mov     rax, rbx                ; the value in rbx
+mov     rax, [rbx]              ; the eight bytes rbx points at
+mov     rax, [rbx + 8]          ; the cell one past that
+mov     rax, [rbx + rcx*8]      ; cell number rcx
+lea     rax, [rbx + 8]          ; that address, without reading it
     </code></pre>
     <table class="pairs">
         <tr><td>mov</td><td>move a value</td></tr>
@@ -195,12 +194,14 @@ lea     rax, [rbx + 8]  ; that address, without reading it
         contents of". This is the most useful slide in the deck: half of
         reading assembly is knowing whether a line touches memory or not.
 
+        The fourth line is an array. A base address, plus an index times the
+        size of one element: 1, 2, 4 or 8. The CPU does that sum inside the
+        instruction. The lab's A5 sums an array of longs with exactly that
+        line.
+
         lea is the odd one. It uses the same bracket syntax but never reads
         anything - it does the arithmetic inside the brackets and hands back
         the answer. It is the address calculator, borrowed as a general adder.
-
-        mforth's DUP is three of these lines: read the top of the stack, move
-        the pointer down, write the value back.
     </aside>
 </section>
 
@@ -226,9 +227,6 @@ idiv    rbx             ; quotient in rax, remainder in rdx
         is the instruction that does it: it copies the sign bit of rax through
         the whole of rdx. Forget cqo and a negative number divides into
         nonsense.
-
-        mforth's division word is /MOD, and it is these two lines with a
-        load either side of them and two stores after.
     </aside>
 </section>
 
@@ -262,7 +260,7 @@ xor     eax, eax        ; therefore: rax = 0
 cmp     rax, rbx        ; subtract, and keep only the flags
 test    rax, rax        ; AND it with itself: zero flag set if zero
     </code></pre>
-    <p class="fragment">Neither one writes a register. They leave a verdict behind.</p>
+    <p class="fragment">Neither one writes a register.<br>They leave a verdict behind.</p>
     <aside class="notes">
         There is a register nobody names: rflags. Almost every arithmetic
         instruction writes it as a side effect - was the answer zero, was it
@@ -302,7 +300,8 @@ jl      done            ; if less than, signed
         Use whichever reads better at the line.
 
         jl is signed, and there is a separate jb for unsigned. Getting that
-        wrong is a real bug, not a style choice.
+        wrong is a real bug, not a style choice, and the lab's A2 has test
+        cases that catch it.
     </aside>
 </section>
 
@@ -325,9 +324,9 @@ ret                     ; pop it into rip
         is an accident of 1970s memory layout that everybody still lives with.
 
         This is also where the room should hear the word return: call
-        remembers where to come back to by writing it in memory. This
-        afternoon, Forth does the same thing in its own second stack, for its
-        own words, and that is the only reason a Forth needs two stacks.
+        remembers where to come back to by writing it in memory. That is what
+        makes recursion work, and the lab's B4 is a factorial that calls
+        itself: every call it makes is one more return address on this stack.
     </aside>
 </section>
 
@@ -338,7 +337,7 @@ ret                     ; pop it into rip
         <tr><td>caller-saved</td><td><code>rax rdi rsi rdx rcx r8 r9 r10 r11</code></td></tr>
         <tr><td>callee-saved</td><td><code>rbx rbp rsp r12 r13 r14 r15</code></td></tr>
     </table>
-    <p class="fragment">Arguments go in <code>rdi</code>, <code>rsi</code>, <code>rdx</code>, <code>rcx</code>, <code>r8</code>, <code>r9</code>. The answer comes back in <code>rax</code>.</p>
+    <p class="fragment">Arguments go in <code>rdi</code>, <code>rsi</code>, <code>rdx</code>, <code>rcx</code>, <code>r8</code>, <code>r9</code>.<br>The answer comes back in <code>rax</code>.</p>
     <aside class="notes">
         This is the System V ABI, the agreement every C function on Linux
         keeps. It is not a hardware rule. It is a promise, and libc keeps it.
@@ -348,15 +347,17 @@ ret                     ; pop it into rip
 
         Bottom row: a function you call must hand these back untouched.
 
-        Now the payoff, and it is the reason this slide is in the deck.
-        mforth's Forth machine lives in rbx, r12 and r13 - three callee-saved
-        registers. So a Forth word that calls printf is the call and nothing
-        else: no saving, no restoring. Had they been in the top row, every
-        word that talks to libc would have to save and restore all three.
+        This slide is the contract for every exercise in the lab. The test is
+        C, and it calls your function this way: the arguments are already in
+        rdi and rsi when your first instruction runs, and the test reads the
+        answer out of rax after your ret. B3 is the bottom row as an exercise:
+        a running total and a count that have to survive a call, kept in rbx
+        and r12, which you must give back as you found them.
 
         One more rule, and it bites silently: rsp must be a multiple of 16 at
         the moment you execute a call. Get it wrong and printf can work for a
-        long time and then crash for no visible reason.
+        long time and then crash for no visible reason. Tier B's notes page
+        explains it, and its tests check rsp at every call.
     </aside>
 </section>
 
@@ -371,9 +372,9 @@ msg:    db      "hello", 0      ; bytes
 count:  dq      0               ; one 64-bit cell
 SIZE    equ     65536           ; a name for a number, no memory
 
-%include "src/words.asm"        ; paste that file in here
+        global  max             ; let the test find max
     </code></pre>
-    <p class="fragment">Directions to the assembler. Not instructions to the CPU.</p>
+    <p class="fragment">Directions to the assembler.<br>Not instructions to the CPU.</p>
     <aside class="notes">
         Sections say what kind of thing follows, and the linker keeps each
         kind together. .text is code, .rodata is constants, .data is variables
@@ -385,57 +386,13 @@ SIZE    equ     65536           ; a name for a number, no memory
         equ is different and worth a sentence. It reserves nothing. It is a
         name for a number, resolved while the file is being assembled.
 
-        %include is textual. nasm is run on src/mforth.asm alone, and every
-        other file in this repo arrives through one of these lines, which is
-        why the order they are written in is the order the assembler sees.
+        A label is private to its file unless it is declared global. Every
+        exercise file in the lab starts with one of these lines, and it is
+        how the C test finds your function.
     </aside>
 </section>
 
 <!-- 15 -->
-<section>
-    <h2>And macros</h2>
-    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2-4|5">
-%macro NEXT 0
-        mov     W, [IP]         ; the execution token IP points at
-        add     IP, 8           ; step past it, ready for next time
-        jmp     [W]             ; jump through the word's code field
-%endmacro
-    </code></pre>
-    <p class="fragment">Write <code>NEXT</code>, get three instructions.</p>
-    <aside class="notes">
-        Copied out of include/mforth.inc, unchanged. This is the real thing,
-        and it is the last three instructions of every word in the system.
-
-        The 0 is how many arguments the macro takes. This one takes none.
-
-        A macro is paste, not call. Nothing jumps anywhere: NEXT written in a
-        file becomes those three lines in that file, every time.
-
-        W and IP are names too, made with %define. IP is rbx and W is rax.
-        Tell the room they will not have to remember that - the point is only
-        that a name can stand for a register, and the file that sets them up
-        is eight lines long.
-
-        Do not explain what NEXT does. That is the next talk. It is here
-        because it is the smallest real macro in the repo.
-    </aside>
-</section>
-
-<!-- 16 -->
-<section>
-    <h2>Two ways to print a line</h2>
-    <p>Ask the kernel. Or ask the C library to ask the kernel.</p>
-    <aside class="notes">
-        Everything so far has been instructions. Now the one architectural
-        choice in the deck, and mforth has made it: it goes through libc.
-
-        Both of the next two files are in the repo, both build, and both print
-        a line. Say that before showing them - the room should know these are
-        not slide snippets.
-    </aside>
-</section>
-
-<!-- 17 -->
 <section>
     <h2>The same program, twice</h2>
     <div class="compare">
@@ -476,8 +433,10 @@ main:
         </div>
     </div>
     <aside class="notes">
-        Both files are in slides/examples/ and both are built by the Makefile
-        next to them.
+        Two ways to print a line: ask the kernel, or ask the C library to ask
+        the kernel. Both files are in slides/examples/, both build, and both
+        print a line. Say that before showing them - the room should know
+        these are not slide snippets.
 
         Left: no libc at all. The kernel starts the program at _start, and
         nothing runs before it. Number 1 is write, number 60 is exit. It has
@@ -489,7 +448,9 @@ main:
         right one does not. The left one also writes its own newline; puts
         adds one.
 
-        The sub rsp, 8 is the 16-byte alignment rule from four slides back.
+        The sub rsp, 8 is the 16-byte alignment rule from two slides back.
+
+        The right-hand column is the lab's B1, nearly line for line.
 
         There is a smaller file still, exit-syscall.asm, which is three
         instructions and no output. Mention it if anyone asks what the
@@ -497,14 +458,14 @@ main:
     </aside>
 </section>
 
-<!-- 18 -->
+<!-- 16 -->
 <section>
     <h2>Two conventions</h2>
     <table class="pairs">
         <tr><td>syscall</td><td>number in <code>rax</code>, then <code>rdi rsi rdx <span class="mark">r10</span> r8 r9</code></td></tr>
-        <tr><td>call</td><td>address in the instruction, then <code>rdi rsi rdx <span class="mark">rcx</span> r8 r9</code></td></tr>
+        <tr><td>call</td><td>address in the call, then <code>rdi rsi rdx <span class="mark">rcx</span> r8 r9</code></td></tr>
     </table>
-    <p class="fragment">Argument four moves, because <code>syscall</code> destroys <code>rcx</code> itself.</p>
+    <p class="fragment">Argument four moves,<br>because <code>syscall</code> destroys <code>rcx</code> itself.</p>
     <aside class="notes">
         Nearly the same, and the two marked registers are the whole
         difference.
@@ -514,72 +475,48 @@ main:
         call, so neither can carry an argument in, and argument four goes to
         r10 instead. Not taste, and not a kernel whim.
 
-        mforth makes no syscalls anywhere. Every line of output in the whole
-        interpreter goes through puts, putchar or printf. So the System V
-        convention is the only contract its words have to keep, and that is
-        one fewer thing to hold in your head this afternoon.
+        Today is the bottom row. Every exercise in the lab is a function that
+        a C test calls, and the ones that print go through puts or printf.
+        No exercise makes a syscall, so the System V convention is the only
+        one you need to hold in your head this morning.
     </aside>
 </section>
 
-<!-- 19 -->
+<!-- 17 -->
 <section>
-    <h2>Building it</h2>
-    <pre class="wide"><code class="language-plaintext" data-trim data-line-numbers="1|2">
-nasm -f elf64 src/mforth.asm -o build/mforth.o
-clang -no-pie build/mforth.o -o build/mforth
+    <h2>What <code>./check</code> does</h2>
+    <pre class="wide"><code class="language-plaintext" data-trim data-line-numbers="1|2|3">
+nasm -f elf64 -g max.asm -o max.o
+clang -no-pie test.c max.o -o test
+./test
     </code></pre>
-    <p class="fragment">Assemble, then link. <code>make</code> runs both.</p>
+    <p class="fragment">Assemble, link with the test, run it.</p>
     <aside class="notes">
-        Two steps and two tools. nasm turns one text file into one object
-        file. clang hands that object to the linker, which resolves puts and
-        printf against the system libc and writes the program.
+        Three steps, and the lab does all three for you. nasm turns your one
+        text file into one object file. clang compiles the exercise's test,
+        which is C, and hands both to the linker, which resolves puts and
+        printf against libc and writes the program. Then the test runs and
+        says what it got.
 
-        elf64 is the object format Linux uses. The whole repo is Linux and
-        x86-64 only.
+        elf64 is the object format Linux uses, and -g records which line of
+        your file each instruction came from, so gdb can show your source
+        while it steps. The real command lines are in lab/tools/build.sh,
+        with a few more flags and a comment on each.
 
-        Which is a problem on this laptop, because it is neither. Everything
-        builds in a container, nasm-docker-amd64, with the repository mounted
-        inside it. That is one docker exec in front of every make, and it is
-        in the README.
+        -no-pie is the one flag that matters if you ever build outside the
+        lab. It is what lets "mov rdi, msg" and "call puts" be written as
+        they are on the last slides. Without it the link fails with
+        "relocation R_X86_64_PC32 ... can not be used when making a PIE
+        object". The fix is -no-pie on the link line, not rewriting the
+        call.
 
-        DEMO, if the room is awake. Build and run the two files from earlier:
-
-        docker exec -w /Workspace/mforth/slides/examples nasm-docker-amd64 make run
-
-        It prints "Hello from a syscall" and then "Hello from libc".
+        DEMO, if the room is awake, in your own codespace: ./check a2. A
+        function that is not written yet fails some cases and passes others
+        by luck, and the output says which.
     </aside>
 </section>
 
-<!-- 20 -->
-<section>
-    <h2>What <code>-no-pie</code> buys</h2>
-    <pre class="wide"><code class="language-x86asm" data-trim>
-mov     rdi, msg        ; the address of msg
-call    puts            ; call it by name
-    </code></pre>
-    <p class="fragment">Under the default, both lines have to be written differently.</p>
-    <pre class="wide fragment"><code class="language-plaintext" data-trim>
-relocation R_X86_64_PC32 against symbol
-'puts@@GLIBC_2.2.5' can not be used when
-making a PIE object
-    </code></pre>
-    <aside class="notes">
-        clang defaults to a position-independent executable, one the kernel
-        can load at any address. Nothing there is wrong, and it costs these
-        two lines their plain form: the call becomes "call puts wrt ..plt" and
-        the address becomes "lea rdi, [rel msg]".
-
-        This repo exists to be read aloud, so it links -no-pie instead. In a
-        non-PIE program a label is a number the linker knows, and both lines
-        stay as written.
-
-        The error is worth showing because you will meet it. The fix is
-        -no-pie on the link line, never "wrt ..plt" on the call. The reasoning
-        is in docs/adr/0001-link-non-pie.md, and the trap is in AGENTS.md.
-    </aside>
-</section>
-
-<!-- 21 -->
+<!-- 18 -->
 <section>
     <h2>Bonus: one instruction, three jobs</h2>
     <div class="compare">
@@ -618,33 +555,39 @@ str     x2, [x0]
     </aside>
 </section>
 
-<!-- 22 -->
+<!-- 19 -->
 <section>
-    <h2>And this afternoon</h2>
+    <h2>Forth's <code>+</code></h2>
+    <p>Forth keeps its numbers on a stack in memory.</p>
     <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3">
 mov     rax, [DSP]              ; n2, the top item
 add     DSP, 8                  ; drop it
 add     [DSP], rax              ; and add it to the one underneath
     </code></pre>
-    <p class="fragment">Forth's <code>+</code>, whole.</p>
+    <p class="fragment">The whole word, in three instructions.</p>
     <aside class="notes">
-        Out of src/words.asm, unchanged, and it is the word that adds two
-        numbers.
+        Forth is a language with almost no syntax: "2 3 +" pushes 2, pushes
+        3, and + replaces the two with 5. Every number lives on a stack in
+        memory, and DSP is a name for the register that points at the top
+        of it.
 
-        The third line is the instruction from the last slide, doing exactly
-        the job it was made for: the answer belongs on the stack, in memory,
-        so read it, add to it, and put it back without ever giving it a name.
+        This is + out of src/words.asm, the Forth this repository is,
+        unchanged. The third line is the instruction from the last slide,
+        doing exactly the job it was made for: the answer belongs on the
+        stack, in memory, so read it, add to it, and put it back without ever
+        giving it a name.
 
         A Forth on arm64 writes this word with five instructions instead of
         three. That is the whole of the difference, and it is why a Forth and
         a CISC machine suit each other.
 
-        Three instructions. That is a Forth word. This afternoon is about a
-        hundred more of them.
+        Tier E of the lab builds a Forth like this one, word by word, until
+        "2 3 + ." prints 5. Its notes page explains Forth from the start, so
+        nobody needs to know any before they begin.
     </aside>
 </section>
 
-<!-- 23 -->
+<!-- 20 -->
 <section>
     <h2>Optional: a loop in one instruction</h2>
     <div class="compare">
@@ -686,14 +629,14 @@ copy:   ldrb    w3, [x0], #1
         cbnz is compare-and-branch-on-non-zero, and it needs no flags. Both
         examples assemble; the arm64 one was built with clang on this laptop.
 
-        mforth does not use rep movsb. It is here because when someone asks
+        No exercise needs rep movsb. It is here because when someone asks
         what CISC ever bought anybody, this is the answer, and on modern CPUs
         it is genuinely fast: the chip recognises the pattern and copies a
         cache line at a time.
     </aside>
 </section>
 
-<!-- 24 -->
+<!-- 21 -->
 <section>
     <h2>What you now know</h2>
     <ul>
@@ -701,29 +644,147 @@ copy:   ldrb    w3, [x0], #1
         <li>Brackets mean memory.</li>
         <li><code>cmp</code> decides, the jump acts.</li>
         <li><code>call</code> remembers where to come back to.</li>
-        <li>NASM pastes files and macros before it assembles.</li>
+        <li>Arguments arrive in <code>rdi</code> and <code>rsi</code>, the answer leaves in <code>rax</code>.</li>
     </ul>
     <aside class="notes">
-        Five things. Everything this afternoon is built out of them.
+        Five things, and they are enough for tiers A and B.
 
-        Point out what is not on the list and never will be: no floating
-        point, no SIMD, no atomics, no threads. A Forth needs none of it, and
-        the instruction set you have just seen is the whole of what two
-        thousand lines of mforth are written in.
+        Point out what is not on the list: floating point, the vector
+        instructions, reading code you have no source for. The lab covers
+        all three, and each of those tiers starts with a page of notes for
+        what this deck left out.
+    </aside>
+</section>
+
+<!-- 22 -->
+<section>
+    <h2>The lab</h2>
+    <ul>
+        <li>Each exercise is one function, written in NASM.</li>
+        <li>A test in C calls it and says what it got.</li>
+        <li>A page with hints, and the solution behind a button.</li>
+    </ul>
+    <p class="fragment">Your pace, your order.<br>Nobody waits for anyone.</p>
+    <aside class="notes">
+        The rest of the morning is yours. Twenty-five exercises, and nobody
+        is expected to finish them all.
+
+        Every exercise starts from a C prototype, like long max(long a,
+        long b). You write the body in assembly, in a file that already has
+        the label and the ret in it. The test is a C program that calls your
+        function with a handful of cases and prints, for each one, ok or what
+        it expected and what it got.
+
+        Each page has the task, a table of which register holds what, and
+        hints in steps, each behind a click. At the bottom a button shows
+        the solution, with a comment on every line. Look at it whenever you
+        like: there is no score, and reading a commented solution is
+        learning too.
+
+        The room will spread out, and that is the point. Some will be in
+        tier A at the end and some will have built a Forth. Put a hand up
+        whenever you are stuck, and help your neighbour when you are not.
+    </aside>
+</section>
+
+<!-- 23 -->
+<section>
+    <h2>Six tiers</h2>
+    <table class="pairs">
+        <tr><td>0</td><td>Start here: run a test, fix a function, step through it</td></tr>
+        <tr><td>A</td><td>Integers and loops</td></tr>
+        <tr><td>B</td><td>The stack, and calling libc</td></tr>
+        <tr><td>C</td><td>Floating point, and four floats at once</td></tr>
+        <tr><td>D</td><td>Debugger puzzles: no source, find the input</td></tr>
+        <tr><td>E</td><td>Build a Forth, until <code>2 3 + .</code> prints 5</td></tr>
+    </table>
+    <p class="fragment">Everyone starts with 0.<br>Then any tier, in any order.</p>
+    <aside class="notes">
+        Tier 0 is one exercise and ten minutes, and it teaches the loop every
+        other exercise uses: test, edit, test again, and look inside with gdb.
+        Nobody should skip it, however much assembly they have written.
+
+        A is this deck, put to work: arithmetic, comparisons, jumps, and
+        walking through memory, up to uppercasing a string in place. Start
+        there if today is your first assembly.
+
+        B is the stack: calling puts and printf, keeping a callee-saved
+        register, and a recursive factorial. Its tests check the 16-byte rule
+        at every call.
+
+        C is floating point, which this deck did not touch. It has its own
+        sixteen registers, and the tier ends with four multiplications in one
+        instruction.
+
+        D turns the lab round. You get a function with no source, only the
+        machine code in gdb, and you work out which input it accepts. Three
+        phases, each harder than the last.
+
+        E builds a Forth from nothing, the inner interpreter first, then the
+        words. It is the hardest tier and the one this repository is about.
+
+        The menu marks each exercise with one to three dots for difficulty.
+    </aside>
+</section>
+
+<!-- 24 -->
+<section>
+    <h2>One exercise</h2>
+    <pre><code class="language-c" data-trim>
+long max(long a, long b);
+    </code></pre>
+    <pre><code class="language-x86asm" data-trim>
+        global  max
+
+        section .text
+max:
+        ; TODO: return the larger one
+        mov     rax, rdi        ; return a for now
+        ret
+    </code></pre>
+    <p class="fragment"><code>a</code> is in <code>rdi</code>, <code>b</code> in <code>rsi</code>.<br>The answer goes in <code>rax</code>.</p>
+    <aside class="notes">
+        This is A2, nearly as the file arrives. The prototype is what the C
+        test sees, and the System V slide is what turns it into registers.
+
+        The file already assembles, links and runs. It is just wrong: it
+        always returns a. So the test has something to say from the start,
+        and the first thing to do with every exercise is to run it before
+        changing anything.
+
+        The TODO marks the line to change. While it is there, ./check calls
+        the exercise "not started", so delete it when you start.
     </aside>
 </section>
 
 <!-- 25 -->
 <section>
-    <h2>Next</h2>
-    <p>The repository.</p>
-    <p class="fragment">Commit by commit, read aloud.</p>
+    <h2>The loop</h2>
+    <pre class="wide"><code class="language-plaintext" data-trim>
+$ ./check a2
+max(2, 3) ... expected 3, got 2
+max(3, 2) ... ok
+...
+4 of 7 passed
+    </code></pre>
+    <table class="pairs">
+        <tr><td><code>./check a2</code></td><td>build A2 and run its test</td></tr>
+        <tr><td><code>./debug a2</code></td><td>the same, stopped at your first instruction</td></tr>
+        <tr><td><code>./check</code></td><td>one line for every exercise</td></tr>
+    </table>
     <aside class="notes">
-        Both intros are done. From here the talk is the code: the commits in
-        order, from an empty file to a Forth that compiles its own words.
+        Every exercise is this loop. Run the test, read which cases fail,
+        change the file, run it again.
 
-        If anyone wants the decks afterwards, they are in the repo, in
-        slides/, with these notes attached.
+        When the test and you disagree, ./debug runs the same test under gdb,
+        stopped on the first instruction of your function, with the registers
+        in a window at the top. Four commands get you through it: si runs
+        one instruction, p $rax prints a register, c goes on to the next
+        case, and q quits. Tier 0 walks through all of it.
+
+        A crash is a result too: ./check names the case it was in and the
+        signal that ended it, so a bad pointer does not look like a hang.
+        An endless loop stops after five seconds.
     </aside>
 </section>
 

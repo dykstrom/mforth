@@ -2,7 +2,11 @@
 
 ## What is this
 
-mforth is a 64-bit indirect-threaded-code (ITC) Forth for Linux/x86_64, written in NASM assembly. It is the worked example for a presentation on Forth, so the code is written to be read aloud and explained. Binding design constraints are in `docs/architecture/design-goals.md`.
+mforth is a 64-bit indirect-threaded-code (ITC) Forth for Linux/x86_64, written in NASM assembly. It began as the worked example for a talk on Forth, so the code is written to be read aloud and explained. Binding design constraints on mforth are in `docs/architecture/design-goals.md`.
+
+The repository now serves a second goal: a self-paced x86-64 assembly lab for a three-hour morning session. The x86-64 deck in `slides/asm/` opens the morning, and attendees then work through the exercises in `lab/` at their own pace, most of them on Apple Silicon Macs. The lab's last tier has attendees build a small Forth of their own, modelled on mforth and pointing at its files; the other tiers are plain assembly.
+
+To start the lab: create a GitHub Codespace on the repository, or run `lab/docker-shell` from the repository root, which leaves you in a shell in `lab/` with the pages at <http://localhost:8000/lab/>. See `lab/README.md`. The lab's own design constraints are in the "The lab" section of `docs/architecture/design-goals.md`.
 
 ## Stack
 

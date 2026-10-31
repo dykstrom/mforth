@@ -1,14 +1,39 @@
 # mforth
 
-A 64-bit indirect-threaded-code (ITC) Forth for Linux/x86_64, written in NASM assembly.
+A 64-bit indirect-threaded-code (ITC) Forth for Linux/x86_64, written in NASM assembly,
+and a self-paced x86-64 assembly lab built around it.
 
-mforth is the worked example for a presentation on Forth. The code is written to be read
-aloud and explained: clarity wins over cleverness, and performance, code size, standards
-compliance and portability are explicit non-goals. See
-[`docs/architecture/design-goals.md`](docs/architecture/design-goals.md) for the binding
-constraints.
+The repository holds three things:
 
-## Building
+- **mforth**, the Forth itself, in `src/`, `include/` and `lib/`. It began as the worked
+  example for a talk on Forth, so the code is written to be read aloud and explained:
+  clarity wins over cleverness, and performance, code size, standards compliance and
+  portability are explicit non-goals. See
+  [`docs/architecture/design-goals.md`](docs/architecture/design-goals.md) for the binding
+  constraints.
+- **The lab**, in [`lab/`](lab/): a morning of x86-64 assembly exercises, one function each,
+  with a test, hints and a solution. It starts with integers and loops, and goes on through
+  calls and the stack, floating point and debugger puzzles to building a small Forth of your
+  own. See [`lab/README.md`](lab/README.md).
+- **The slides**, in [`slides/`](slides/): the x86-64 deck that opens the lab, and the Forth
+  deck from the earlier talk. See [`slides/README.md`](slides/README.md).
+
+## Starting the lab
+
+In GitHub Codespaces: on the repository page, choose **Code → Codespaces → Create codespace
+on main**. The lab pages open in a browser tab and the terminal opens in `lab/`.
+
+On your own machine, with Docker installed, run this from the repository root:
+
+```sh
+lab/docker-shell
+```
+
+It leaves you in a shell in `lab/`, with the lab pages at <http://localhost:8000/lab/>.
+Start with tier 0 there. [`lab/README.md`](lab/README.md) has the details, including what
+an Apple Silicon Mac needs for the debugger.
+
+## Building mforth
 
 You need `nasm` and `clang` on Linux/x86_64:
 

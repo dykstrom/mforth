@@ -49,7 +49,7 @@ how far along the string you've got.
 
 ```x86asm
 strlen:
-        xor     eax, eax                ; count = 0
+        xor     rax, rax                ; count = 0
 .next:
         ; if the byte at rdi + rax is 0, jump to .done
         ; count one more, and go round again

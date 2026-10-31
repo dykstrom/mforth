@@ -6,7 +6,7 @@
 
         section .text
 sum:
-        xor     eax, eax                ; total = 0
+        xor     rax, rax                ; total = 0
 
         ; Nothing to add up: the 0 is the answer. Going round the loop once
         ; anyway would read a number that isn't in the array.
@@ -16,7 +16,7 @@ sum:
         ; Element i lives at rdi + i*8: eight bytes to a long. add can read
         ; its second operand straight from memory, so the loop needs no
         ; register to hold the element in.
-        xor     ecx, ecx                ; i = 0
+        xor     rcx, rcx                ; i = 0
 .next:
         add     rax, [rdi + rcx*8]      ; total += a[i]
         inc     rcx

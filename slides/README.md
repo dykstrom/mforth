@@ -77,12 +77,24 @@ under 85 characters, which covers anything copied out of `src/` or
 `lib/prelude.f`. Count the characters rather than trusting the browser window
 you are looking at.
 
+Write 64-bit register names in the deck's code: `xor rax, rax`, not
+`xor eax, eax`. The deck does not teach that writing a 32-bit name clears
+the top half of the register. The files in `examples/` follow the same
+rule, because the slides quote them. The exception is the slide on why
+one register has four names.
+
 Put what you plan to say in `<aside class="notes">` inside the slide.
 
 Some lab pages point at slides in the assembly deck, by title or by what a
 slide shows. `lab/exercises/e3-plus/README.md` names the slide "Forth's +",
 and the tier notes in `lab/tiers/` say what the talk did not cover. Before
 you cut or rename a slide, search `lab/` for its title and its subject.
+
+The speaker notes also cite slides by number. The timing note on slide 1
+names the slides not to cut and the one to drop first, and the `rep movsb`
+slide points back at slide 4. Each slide starts with a comment such as
+`<!-- 4 -->`. When you add, cut or move a slide, renumber those comments and
+search the notes for "slide" to fix the numbers they cite.
 
 Nothing in `slides/` is built by the top-level `Makefile`: `make` and
 `make test` do not look here. `examples/` has a Makefile of its own, run

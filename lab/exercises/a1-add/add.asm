@@ -10,5 +10,5 @@
         section .text
 add:
         ; TODO: return a + b
-        xor     eax, eax                ; return 0 for now
+        xor     rax, rax                ; return 0 for now
         ret

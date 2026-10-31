@@ -10,5 +10,5 @@
         section .text
 sum:
         ; TODO: add up the n numbers at rdi
-        xor     eax, eax                ; return 0 for now
+        xor     rax, rax                ; return 0 for now
         ret

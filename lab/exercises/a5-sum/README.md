@@ -50,9 +50,9 @@ of an empty array to catch that.
 
 ```x86asm
 sum:
-        xor     eax, eax                ; total = 0
+        xor     rax, rax                ; total = 0
         ; if n is 0, return
-        xor     ecx, ecx                ; i = 0
+        xor     rcx, rcx                ; i = 0
 .next:
         ; total += a[i]
         ; i++, and loop while i < n

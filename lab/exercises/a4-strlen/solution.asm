@@ -8,7 +8,7 @@
 strlen:
         ; rax counts, and is the address of the next byte to look at as
         ; well: s + rax. When the byte there is 0, rax is the length.
-        xor     eax, eax                ; length = 0
+        xor     rax, rax                ; length = 0
 .next:
         ; byte says to compare one byte, not eight. Without it nasm cannot
         ; tell how much to read: neither [rdi + rax] nor 0 has a size.

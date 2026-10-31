@@ -11,5 +11,5 @@
         section .text
 strlen:
         ; TODO: count the bytes before the 0
-        xor     eax, eax                ; return 0 for now
+        xor     rax, rax                ; return 0 for now
         ret

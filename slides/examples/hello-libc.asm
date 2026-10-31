@@ -32,6 +32,6 @@ main:
         mov     rdi, msg                ; first integer argument goes in rdi
         call    puts
 
-        xor     eax, eax                ; return 0 from main
+        xor     rax, rax                ; return 0 from main
         add     rsp, 8                  ; undo the alignment before returning
         ret

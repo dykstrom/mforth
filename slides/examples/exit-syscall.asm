@@ -25,7 +25,7 @@
         section .text
 _start:
         ; exit(0)
-        mov     eax, 60                 ; 60 is exit
-        xor     edi, edi                ; exit status 0, the first argument
+        mov     rax, 60                 ; 60 is exit
+        xor     rdi, rdi                ; exit status 0, the first argument
         syscall                         ; into the kernel, and the process
                                         ; is gone: nothing comes back

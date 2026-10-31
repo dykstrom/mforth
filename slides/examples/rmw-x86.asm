@@ -32,7 +32,7 @@ main:
 
         mov     rdi, fmt                ; print the cell before the addition
         mov     rsi, [cell]
-        xor     eax, eax                ; no arguments in vector registers
+        xor     rax, rax                ; no arguments in vector registers
         call    printf
 
         mov     rax, cell               ; the address of the cell
@@ -41,9 +41,9 @@ main:
 
         mov     rdi, fmt                ; and print it after
         mov     rsi, [cell]
-        xor     eax, eax
+        xor     rax, rax
         call    printf
 
-        xor     eax, eax                ; return 0 from main
+        xor     rax, rax                ; return 0 from main
         pop     rbx
         ret

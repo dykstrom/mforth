@@ -27,13 +27,13 @@ msglen  equ     $ - msg                 ; $ is the address here, so this is
         section .text
 _start:
         ; write(1, msg, msglen)
-        mov     eax, 1                  ; 1 is write
-        mov     edi, 1                  ; write to file descriptor 1, stdout
+        mov     rax, 1                  ; 1 is write
+        mov     rdi, 1                  ; write to file descriptor 1, stdout
         mov     rsi, msg                ; the first byte to write
-        mov     edx, msglen             ; how many bytes
+        mov     rdx, msglen             ; how many bytes
         syscall                         ; into the kernel and back
 
         ; exit(0). Nothing returns from here: the process is gone.
-        mov     eax, 60                 ; 60 is exit
-        xor     edi, edi                ; exit status 0
+        mov     rax, 60                 ; 60 is exit
+        xor     rdi, rdi                ; exit status 0
         syscall

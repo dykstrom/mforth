@@ -26,10 +26,10 @@
         TIMING
 
         Everything else this morning is the lab, so every minute here is a
-        minute less of it. Do not cut 13, 15, 23 or 24: the argument
+        minute less of it. Do not cut 13, 15, 22 or 23: the argument
         registers, the libc hello world, the six tiers and the first
         exercise are what the room needs before it starts on its own. The
-        others can all go faster. Slide 20 is already marked optional and is
+        others can all go faster. Slide 19 is already marked optional and is
         the heaviest at about ninety seconds, so drop it first.
 
         Every instruction in here turns up in the lab, and the lab goes
@@ -43,6 +43,63 @@
 </section>
 
 <!-- 2 -->
+<section>
+    <h2>What the machine is</h2>
+    <div class="machine">
+        <div class="part">
+            <p class="name">CPU</p>
+            <div class="regs">
+                <div>rax</div><div>rbx</div><div>rcx</div><div>rdx</div>
+                <div>rsi</div><div>rdi</div><div>rbp</div><div>rsp</div>
+                <div>r8</div><div>r9</div><div>r10</div><div>r11</div>
+                <div>r12</div><div>r13</div><div>r14</div><div>r15</div>
+                <div class="rip"><span class="mark">rip</span> = <span class="mark">0x401000</span></div>
+            </div>
+            <p class="size">16 registers, 8 bytes each</p>
+        </div>
+        <div class="bus">
+            <div class="arrow">&#8644;</div>
+            <p class="size">load / store</p>
+        </div>
+        <div class="part">
+            <p class="name">memory</p>
+            <div class="bytes">
+                <div class="addr"></div><div class="more">&#8942;</div>
+                <div class="addr mark">0x401000</div><div class="byte">48</div>
+                <div class="addr">0x401001</div><div class="byte">8b</div>
+                <div class="addr">0x401002</div><div class="byte">07</div>
+                <div class="addr">0x401003</div><div class="byte">c3</div>
+                <div class="addr"></div><div class="more">&#8942;</div>
+            </div>
+            <p class="size">billions of bytes, numbered</p>
+        </div>
+    </div>
+    <p class="fragment">The program is in memory too, as bytes.</p>
+    <aside class="notes">
+        Everyone has seen this picture. It is here so that the next half hour
+        has something to point at. Twenty seconds, then move on.
+
+        Left: the CPU, and the only part of it we will talk about, the
+        registers. Sixteen of them, eight bytes each, inside the chip. Reading
+        one costs nothing.
+
+        Right: memory. One flat array of bytes, numbered from 0 up; the number
+        is the address. There are no types in it. A byte is a byte, and what
+        it means is decided by the instruction that reads it.
+
+        The arrow is the only way between the two: an instruction loads bytes
+        from an address into a register, or stores a register at an address.
+        It is slow compared to a register, and that is the whole reason
+        registers exist.
+
+        rip is the odd one out: it holds the address of the next instruction.
+        The four bytes it points at are a real function, mov rax, [rdi] and
+        then ret. Code and data are the same stuff, in the same memory. The
+        next slide is what the CPU does with rip.
+    </aside>
+</section>
+
+<!-- 3 -->
 <section>
     <h2>What the machine does</h2>
     <ul>
@@ -58,14 +115,10 @@
         rip is the instruction pointer. It is the only register you cannot
         name in an instruction: nothing writes rip directly. A jump writes it,
         a call writes it, and returning writes it back. That is the list.
-
-        Say the word memory here: one flat array of bytes, addressed from 0 up.
-        There are no types in it. A byte is a byte, and what it means is
-        decided by the instruction that reads it.
     </aside>
 </section>
 
-<!-- 3 -->
+<!-- 4 -->
 <section>
     <h2>Sixteen registers</h2>
     <table class="words">
@@ -102,7 +155,7 @@
     </aside>
 </section>
 
-<!-- 4 -->
+<!-- 5 -->
 <section>
     <h2>Why one register has four names</h2>
     <table class="pairs">
@@ -124,27 +177,6 @@
 
         The lab's uppercase exercise, A6, reads a character into eax and
         writes it back from al. Two names, one register.
-    </aside>
-</section>
-
-<!-- 5 -->
-<section>
-    <h2>The rule that bites</h2>
-    <pre class="wide"><code class="language-x86asm" data-trim data-line-numbers="1|2|3">
-mov     rax, -1         ; rax = 0xFFFFFFFFFFFFFFFF
-mov     eax, 10         ; rax = 0x000000000000000A  - top half zeroed
-mov     al, 10          ; rax = 0xFFFFFFFFFFFFFF0A  - top 56 bits kept
-    </code></pre>
-    <p class="fragment">Writing a 32-bit name clears the upper 32 bits.<br>The smaller names do not.</p>
-    <aside class="notes">
-        This is the one surprise in the naming, and it is not a quirk to work
-        around. It is a tool.
-
-        mov eax, 10 and mov rax, 10 leave the same value in rax, and the
-        32-bit form is two bytes shorter, so that is what you write when the
-        value fits. You will see "xor eax, eax" in the lab's solutions where
-        the intention is to clear the whole of rax, and now you know why that
-        is enough.
     </aside>
 </section>
 
@@ -237,7 +269,7 @@ idiv    rbx             ; quotient in rax, remainder in rdx
 and     rax, rbx        ; bits set in both
 or      rax, rbx        ; bits set in either
 xor     rax, rbx        ; bits set in one, not both
-xor     eax, eax        ; therefore: rax = 0
+xor     rax, rax        ; therefore: rax = 0
     </code></pre>
     <p class="fragment">No bit differs from itself.</p>
     <aside class="notes">
@@ -246,10 +278,14 @@ xor     eax, eax        ; therefore: rax = 0
 
         The fourth is an idiom you have to be able to read, because it is
         everywhere and it looks like a trick. Anything exclusive-ORed with
-        itself is zero. It is shorter than "mov eax, 0", and the CPU has
+        itself is zero. It is shorter than "mov rax, 0", and the CPU has
         recognised it as "clear this register" for thirty years.
 
         Read it as: rax is now zero. Not as: something clever happened.
+
+        The lab's solutions write it "xor eax, eax". Same result, one byte
+        shorter: writing eax clears all of rax. The lab pages say so where it
+        comes up, in A6 and B2.
     </aside>
 </section>
 
@@ -403,14 +439,14 @@ msg:    db      "Hello from a syscall", 10
 msglen  equ     $ - msg
 
 _start:
-        mov     eax, 1
-        mov     edi, 1
+        mov     rax, 1
+        mov     rdi, 1
         mov     rsi, msg
-        mov     edx, msglen
+        mov     rdx, msglen
         syscall
 
-        mov     eax, 60
-        xor     edi, edi
+        mov     rax, 60
+        xor     rdi, rdi
         syscall
             </code></pre>
         </div>
@@ -426,7 +462,7 @@ main:
         call    puts
 
 
-        xor     eax, eax
+        xor     rax, rax
         add     rsp, 8
         ret
             </code></pre>
@@ -484,40 +520,6 @@ main:
 
 <!-- 17 -->
 <section>
-    <h2>What <code>./check</code> does</h2>
-    <pre class="wide"><code class="language-plaintext" data-trim data-line-numbers="1|2|3">
-nasm -f elf64 -g max.asm -o max.o
-clang -no-pie test.c max.o -o test
-./test
-    </code></pre>
-    <p class="fragment">Assemble, link with the test, run it.</p>
-    <aside class="notes">
-        Three steps, and the lab does all three for you. nasm turns your one
-        text file into one object file. clang compiles the exercise's test,
-        which is C, and hands both to the linker, which resolves puts and
-        printf against libc and writes the program. Then the test runs and
-        says what it got.
-
-        elf64 is the object format Linux uses, and -g records which line of
-        your file each instruction came from, so gdb can show your source
-        while it steps. The real command lines are in lab/tools/build.sh,
-        with a few more flags and a comment on each.
-
-        -no-pie is the one flag that matters if you ever build outside the
-        lab. It is what lets "mov rdi, msg" and "call puts" be written as
-        they are on the last slides. Without it the link fails with
-        "relocation R_X86_64_PC32 ... can not be used when making a PIE
-        object". The fix is -no-pie on the link line, not rewriting the
-        call.
-
-        DEMO, if the room is awake, in your own codespace: ./check a2. A
-        function that is not written yet fails some cases and passes others
-        by luck, and the output says which.
-    </aside>
-</section>
-
-<!-- 18 -->
-<section>
     <h2>Bonus: one instruction, three jobs</h2>
     <div class="compare">
         <div>
@@ -555,7 +557,7 @@ str     x2, [x0]
     </aside>
 </section>
 
-<!-- 19 -->
+<!-- 18 -->
 <section>
     <h2>Forth's <code>+</code></h2>
     <p>Forth keeps its numbers on a stack in memory.</p>
@@ -587,7 +589,7 @@ add     [DSP], rax              ; and add it to the one underneath
     </aside>
 </section>
 
-<!-- 20 -->
+<!-- 19 -->
 <section>
     <h2>Optional: a loop in one instruction</h2>
     <div class="compare">
@@ -620,7 +622,7 @@ copy:   ldrb    w3, [x0], #1
         whole copy loop, with its test and its branch, inside one instruction.
 
         This is the far end of CISC, and it is where those old register duties
-        on slide 3 come from - source, destination, count, sitting in rsi, rdi
+        on slide 4 come from - source, destination, count, sitting in rsi, rdi
         and rcx exactly as the names say.
 
         On the right the loop is written out, because arm64 has no
@@ -636,7 +638,7 @@ copy:   ldrb    w3, [x0], #1
     </aside>
 </section>
 
-<!-- 21 -->
+<!-- 20 -->
 <section>
     <h2>What you now know</h2>
     <ul>
@@ -656,7 +658,7 @@ copy:   ldrb    w3, [x0], #1
     </aside>
 </section>
 
-<!-- 22 -->
+<!-- 21 -->
 <section>
     <h2>The lab</h2>
     <ul>
@@ -687,7 +689,7 @@ copy:   ldrb    w3, [x0], #1
     </aside>
 </section>
 
-<!-- 23 -->
+<!-- 22 -->
 <section>
     <h2>Six tiers</h2>
     <table class="pairs">
@@ -727,7 +729,7 @@ copy:   ldrb    w3, [x0], #1
     </aside>
 </section>
 
-<!-- 24 -->
+<!-- 23 -->
 <section>
     <h2>One exercise</h2>
     <pre><code class="language-c" data-trim>
@@ -757,7 +759,7 @@ max:
     </aside>
 </section>
 
-<!-- 25 -->
+<!-- 24 -->
 <section>
     <h2>The loop</h2>
     <pre class="wide"><code class="language-plaintext" data-trim>
@@ -785,6 +787,40 @@ max(3, 2) ... ok
         A crash is a result too: ./check names the case it was in and the
         signal that ended it, so a bad pointer does not look like a hang.
         An endless loop stops after five seconds.
+    </aside>
+</section>
+
+<!-- 25 -->
+<section>
+    <h2>What <code>./check</code> does</h2>
+    <pre class="wide"><code class="language-plaintext" data-trim data-line-numbers="1|2|3">
+nasm -f elf64 -g max.asm -o max.o
+clang -no-pie test.c max.o -o test
+./test
+    </code></pre>
+    <p class="fragment">Assemble, link with the test, run it.</p>
+    <aside class="notes">
+        Three steps, and the lab does all three for you. nasm turns your one
+        text file into one object file. clang compiles the exercise's test,
+        which is C, and hands both to the linker, which resolves puts and
+        printf against libc and writes the program. Then the test runs and
+        says what it got.
+
+        elf64 is the object format Linux uses, and -g records which line of
+        your file each instruction came from, so gdb can show your source
+        while it steps. The real command lines are in lab/tools/build.sh,
+        with a few more flags and a comment on each.
+
+        -no-pie is the one flag that matters if you ever build outside the
+        lab. It is what lets "mov rdi, msg" and "call puts" be written as
+        they are in "The same program, twice". Without it the link fails with
+        "relocation R_X86_64_PC32 ... can not be used when making a PIE
+        object". The fix is -no-pie on the link line, not rewriting the
+        call.
+
+        DEMO, if the room is awake, in your own codespace: ./check a2. A
+        function that is not written yet fails some cases and passes others
+        by luck, and the output says which.
     </aside>
 </section>
 

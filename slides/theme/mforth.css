@@ -228,6 +228,100 @@ body {
     font-size: 0.62em;
 }
 
+/* The CPU and memory, side by side, with an arrow between them. The assembly
+ * deck draws it once, before it says anything else.
+ *
+ * Write .machine holding three divs: a .part for the CPU, a .bus for the
+ * arrow, and a .part for memory. Each .part opens with a .name and closes with
+ * a .size. The CPU's registers go in .regs, four to a row, and a .rip spans
+ * the row under them. Memory goes in .bytes, an address and then its byte on
+ * each row; an empty .addr and a .more make a row of dots, for the bytes not
+ * drawn. Mark the address rip holds with .mark at both ends, so the eye can
+ * join them. */
+.reveal .machine {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.2em;
+    margin-top: 0.4em;
+    font-family: var(--r-code-font);
+    font-size: 0.6em;
+}
+
+.reveal .machine .part {
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.4em 1em 0.6em;
+}
+
+.reveal .machine .name {
+    margin: 0 0 0.4em;
+    color: var(--accent);
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+
+.reveal .machine .size {
+    margin: 0.5em 0 0;
+    color: #999;
+    font-size: 0.8em;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.reveal .machine .regs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.reveal .machine .regs div,
+.reveal .machine .bytes .byte {
+    border: 1px solid #666;
+    border-radius: 2px;
+    padding: 0.1em 0.6em;
+    text-align: center;
+    color: #ddd;
+}
+
+.reveal .machine .regs .rip {
+    grid-column: 1 / -1;
+    margin-top: 0.4em;
+}
+
+.reveal .machine .bus {
+    color: var(--accent);
+    text-align: center;
+}
+
+.reveal .machine .bus .arrow {
+    font-size: 2.4em;
+    line-height: 1;
+}
+
+.reveal .machine .bytes {
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 0.8em;
+    row-gap: 4px;
+    align-items: center;
+}
+
+.reveal .machine .bytes .addr {
+    color: #999;
+    text-align: right;
+}
+
+.reveal .machine .bytes .addr.mark {
+    color: var(--accent);
+}
+
+.reveal .machine .bytes .more {
+    color: #666;
+    text-align: center;
+    line-height: 1;
+}
+
 /* Headings sit closer to what follows them than the theme allows. */
 .reveal h1, .reveal h2, .reveal h3 {
     text-transform: none;

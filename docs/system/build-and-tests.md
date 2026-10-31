@@ -13,8 +13,8 @@ which is what makes `puts` and the rest of libc available.
 `main` calls `setvbuf` on `stdout` before it prints anything, asking for line buffering.
 Do not remove it. libc otherwise chooses the buffering from what the output is: a terminal
 is flushed at every newline, but a pipe is held until 4096 characters have gathered or the
-process ends. Standard output is a pipe whenever mforth is run through `docker exec` without
-`-t`, which is how `make run` is usually reached, and an interpreter that answers only after
+process ends. Standard output is a pipe whenever mforth is run through `docker run` or
+`docker exec` without `-t`, which is how `make run` is usually reached, and an interpreter that answers only after
 Ctrl-D is no use to anyone. The call makes the behaviour the same either way.
 
 `make test` runs `tests/run.sh` from the repository root. Each `tests/<name>.expected` holds

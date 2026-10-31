@@ -42,17 +42,22 @@ nasm -f elf64 <file>.asm -o <file>.o
 clang -no-pie <file>.o -o <name>
 ```
 
-If your platform is not Linux/x86_64, build inside a container instead. Any x86_64 Linux
-image with `nasm` and `clang` will do; mount the repository into it and run the commands
-above from the mounted directory:
+With `make` as well, `make` builds `build/mforth`, `make test` runs the tests and `make run`
+starts the interpreter.
+
+If your platform is not Linux/x86_64, build inside a container instead.
+[`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) describes an image with everything
+needed. It is the same image the lab runs in. Build it once, then run `make` inside it with
+the repository mounted:
 
 ```sh
-docker run --rm -v "$PWD:/workspace" -w /workspace <image> \
-    sh -c 'nasm -f elf64 <file>.asm -o <file>.o && clang -no-pie <file>.o -o <name>'
+docker build --platform linux/amd64 -t x86-lab .devcontainer
+docker run --rm --platform linux/amd64 -v "$PWD:/workspace" -w /workspace x86-lab make test
+docker run --rm -it --platform linux/amd64 -v "$PWD:/workspace" -w /workspace x86-lab make run
 ```
 
-On an arm64 host, ask for an amd64 image (`docker run --platform linux/amd64 ...`) so the
-assembled binary can also be run under emulation.
+`--platform linux/amd64` matters on an arm64 host such as an Apple Silicon Mac: it asks for
+the x86-64 image, so the assembled binary can also be run under emulation.
 
 `-no-pie` is load-bearing for readability, not just packaging. In a non-PIE executable the
 linker synthesizes a PLT stub for `puts`, so `call puts` assembles and links as written, and

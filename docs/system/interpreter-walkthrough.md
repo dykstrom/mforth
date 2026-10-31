@@ -9,7 +9,7 @@ folder describe one area each; this one follows a single line through all of the
 
 1. `sub rsp, 8` puts the machine stack back on a 16-byte boundary. No word touches rsp again.
 2. `setvbuf` asks libc for line buffering, because standard output is a pipe under
-   `docker exec` — see `docs/system/build-and-tests.md`.
+   `docker` without `-t` — see `docs/system/build-and-tests.md`.
 3. `puts` prints the banner.
 4. DSP and RSP are set to the top of their regions in `src/inner.asm`. Both stacks grow down.
 5. `latest` is set to `PREVIOUS_HEADER`, the last header the assembler laid down. This is the

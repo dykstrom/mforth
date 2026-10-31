@@ -138,9 +138,12 @@
     </code></pre>
     <p>The dot prints the top of the stack.</p>
     <aside class="notes">
-        DEMO. Switch to the terminal and run:
+        DEMO. Switch to the terminal, in the repository root, and run:
 
-        docker exec -it -w /Workspace/mforth nasm-docker-amd64 sh -c 'make run'
+        docker run --rm -it --platform linux/amd64 -v "$PWD:/workspace" -w /workspace x86-lab make run
+
+        Build the image before the talk, not during it - the first build takes
+        a few minutes: docker build --platform linux/amd64 -t x86-lab .devcontainer
 
         It prints "mforth 0.10.0" and then about fifty " ok" lines. That is the
         prelude being read - a file of Forth definitions fed in ahead of you.
@@ -314,7 +317,7 @@ OVER .S
     <aside class="notes">
         DEMO. Same terminal - if it is gone, it is
 
-        docker exec -it -w /Workspace/mforth nasm-docker-amd64 sh -c 'make run'
+        docker run --rm -it --platform linux/amd64 -v "$PWD:/workspace" -w /workspace x86-lab make run
 
         Type these five lines.
 
@@ -406,7 +409,7 @@ OVER .S
     <aside class="notes">
         DEMO. Same terminal - if it is gone, it is
 
-        docker exec -it -w /Workspace/mforth nasm-docker-amd64 sh -c 'make run'
+        docker run --rm -it --platform linux/amd64 -v "$PWD:/workspace" -w /workspace x86-lab make run
 
         Type the definition, then use it.
 
@@ -679,7 +682,7 @@ not negative
     <aside class="notes">
         DEMO. The last one. Same terminal - if it is gone, it is
 
-        docker exec -it -w /Workspace/mforth nasm-docker-amd64 sh -c 'make run'
+        docker run --rm -it --platform linux/amd64 -v "$PWD:/workspace" -w /workspace x86-lab make run
 
         Type the definition and both calls.
 

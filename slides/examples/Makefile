@@ -1,10 +1,11 @@
 # Build the programs the assembly deck quotes. Each one really runs; the
 # deck shows the source and the output side by side.
 #
-# The three x86-64 programs build in the same container that builds mforth:
+# The four x86-64 programs build in the image that builds mforth and the
+# lab, from .devcontainer/Dockerfile. From the repository root:
 #
-#     docker exec -w /Workspace/mforth/slides/examples \
-#         nasm-docker-amd64 make run
+#     docker run --rm --platform linux/amd64 -v "$PWD:/workspace" \
+#         -w /workspace/slides/examples x86-lab make run
 #
 # rmw-arm64.s is not built here and is not part of "all". It is an arm64
 # source kept to be read beside rmw-x86.asm, and it assembles on the macOS

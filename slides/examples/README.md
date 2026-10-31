@@ -19,10 +19,14 @@ call convention, and one CISC instruction against three RISC ones.
 
 ## Building
 
-The four x86-64 programs build in the container that builds mforth:
+The four x86-64 programs build on any x86-64 Linux with nasm, clang and make.
+The `x86-lab` image, from `.devcontainer/Dockerfile`, is one, and it builds
+mforth and the lab too. From the repository root:
 
 ```sh
-docker exec -w /Workspace/mforth/slides/examples nasm-docker-amd64 make run
+docker build --platform linux/amd64 -t x86-lab .devcontainer
+docker run --rm --platform linux/amd64 -v "$PWD:/workspace" \
+    -w /workspace/slides/examples x86-lab make run
 ```
 
 `make` builds them, `make run` builds and runs all four, and `make clean`
@@ -39,7 +43,7 @@ cd slides/examples && make rmw-arm64.o
 
 ## What they print
 
-Recorded from `make run` in `nasm-docker-amd64`, NASM 3.01 and clang 21.1.8.
+Recorded from `make run` in the `x86-lab` image, NASM 3.01 and clang 21.1.8.
 All four exit with status 0.
 
 ```

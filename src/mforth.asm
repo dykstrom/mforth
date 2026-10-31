@@ -44,7 +44,7 @@ main:
         ; not: libc holds the characters until 4096 of them have gathered or
         ; the process ends. mforth answers one line at a time and has to be
         ; seen doing it, so it asks for line buffering whichever it is. Without
-        ; this, "make run" under "docker exec" without a terminal prints
+        ; this, "make run" under docker without a terminal prints
         ; nothing at all until Ctrl-D, and then prints the whole session at
         ; once. It has to be asked before anything is printed.
         mov     rdi, [stdout]           ; the stream to change

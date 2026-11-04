@@ -58,7 +58,14 @@ fi
 # Once it has stopped, the register window. Only on a terminal: gdb will not
 # draw windows anywhere else. A tier C exercise shows the SSE registers,
 # where its doubles are, instead of the integer ones.
+#
+# The register window goes beside whatever gdb shows already, the source by
+# default. A tier D puzzle has no source, so it gets the machine code first:
+# "layout asm", then "layout regs" keeps the machine code beside the registers.
 if [ -t 1 ]; then
+    case $id in
+        d*) set -- "$@" -ex "layout asm" ;;
+    esac
     set -- "$@" -ex "layout regs"
     case $id in
         c*) set -- "$@" -ex "tui reg sse" ;;
